@@ -899,17 +899,60 @@ async function callPollinations(systemPrompt, userPrompt, useJson) {
     };
     if (useJson) body.jsonMode = true;
 
-    var resp = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    if (!resp.ok) {
-        var errText = '';
-        try { errText = await resp.text(); } catch(e){}
-        throw new Error('Error HTTP ' + resp.status + (errText ? ': ' + errText.substring(0,200) : ''));
+    var MAX_INTENTOS = 3;
+    var ESPERAS = [3000, 6000, 10000]; // ms entre reintentos
+
+    for (var intento = 0; intento < MAX_INTENTOS; intento++) {
+        try {
+            var resp = await fetch('https://text.pollinations.ai/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(60000)
+            });
+
+            if (resp.ok) return await resp.text();
+
+            // Errores recuperables: 502, 503, 504, 429
+            var recuperable = [429, 502, 503, 504].indexOf(resp.status) !== -1;
+            if (recuperable && intento < MAX_INTENTOS - 1) {
+                var espera = ESPERAS[intento];
+                setBtnStatus('⏳ Servidor ocupado, reintentando en ' + (espera/1000) + 's... (intento ' + (intento+2) + '/' + MAX_INTENTOS + ')');
+                await new Promise(function(r){ setTimeout(r, espera); });
+                body.seed = Math.floor(Math.random() * 99999); // nueva semilla
+                continue;
+            }
+
+            var errText = '';
+            try { errText = await resp.text(); } catch(e){}
+            throw new Error('Error HTTP ' + resp.status + ' tras ' + (intento+1) + ' intento(s).');
+
+        } catch(err) {
+            // Error de red o timeout — reintentar si quedan intentos
+            if (err.name === 'AbortError') {
+                if (intento < MAX_INTENTOS - 1) {
+                    var espera = ESPERAS[intento];
+                    setBtnStatus('⏳ Tiempo agotado, reintentando en ' + (espera/1000) + 's... (intento ' + (intento+2) + '/' + MAX_INTENTOS + ')');
+                    await new Promise(function(r){ setTimeout(r, espera); });
+                    continue;
+                }
+                throw new Error('Tiempo de espera agotado tras ' + MAX_INTENTOS + ' intentos. Pollinations puede estar con alta demanda; intenta en unos minutos.');
+            }
+            if (err.message.indexOf('Error HTTP') === 0) throw err; // ya formateado
+            if (intento < MAX_INTENTOS - 1) {
+                var espera = ESPERAS[intento];
+                setBtnStatus('⏳ Error de red, reintentando en ' + (espera/1000) + 's...');
+                await new Promise(function(r){ setTimeout(r, espera); });
+                continue;
+            }
+            throw err;
+        }
     }
-    return await resp.text();
+}
+
+function setBtnStatus(msg) {
+    var btn = document.getElementById('btnGenerar');
+    if (btn) btn.innerHTML = '<span class="spinner"></span> ' + msg;
 }
 
 // =============================================
