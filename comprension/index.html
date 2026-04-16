@@ -1100,7 +1100,8 @@ async function generar() {
         }
 
         // Ensamblar el objeto completo
-        parsed.texto = texto;
+        parsed.texto     = texto;
+        parsed.preguntas = shuffleRespuestas(parsed.preguntas);
         lastTitulo    = parsed.titulo || '';
         generatedHTML = buildExerciseHTML(parsed);
         displayResults();
@@ -1135,7 +1136,8 @@ async function retryPreguntas() {
             throw new Error('Las preguntas volvieron vacías. Reduce el número de preguntas e intenta de nuevo.');
         }
 
-        parsed.texto = savedTexto;
+        parsed.texto     = savedTexto;
+        parsed.preguntas = shuffleRespuestas(parsed.preguntas);
         if (!parsed.titulo    && savedTitulo)    parsed.titulo    = savedTitulo;
         if (!parsed.subtitulo && savedSubtitulo) parsed.subtitulo = savedSubtitulo;
 
@@ -1148,6 +1150,35 @@ async function retryPreguntas() {
         btn.disabled = false;
         btn.innerHTML = '🚀 Generar ejercicio de comprensión lectora';
     }
+}
+
+// =============================================
+// BARAJAR RESPUESTAS (nunca en posición A)
+// =============================================
+function shuffleRespuestas(preguntas) {
+    // Distribuye las respuestas correctas en posiciones 1,2,3... (nunca 0 = A)
+    // Usa rotación garantizada: reparte equitativamente entre B, C, D
+    var numOpts = preguntas[0] ? preguntas[0].opciones.length : 4;
+    var posiciones = [1, 2, 3].slice(0, numOpts - 1); // posiciones disponibles sin la A
+
+    preguntas.forEach(function(q, i) {
+        var correctaActual = q.respuestaCorrecta;
+        var numOpciones    = q.opciones.length;
+
+        // Elegir posición destino: rotar entre B, C, D equitativamente
+        var posDestino = posiciones[i % posiciones.length];
+
+        // Si la correcta ya está en posDestino, no hacer nada
+        if (correctaActual === posDestino) return;
+
+        // Intercambiar la opción correcta con la que está en posDestino
+        var tmp = q.opciones[posDestino];
+        q.opciones[posDestino] = q.opciones[correctaActual];
+        q.opciones[correctaActual] = tmp;
+        q.respuestaCorrecta = posDestino;
+    });
+
+    return preguntas;
 }
 
 // =============================================
