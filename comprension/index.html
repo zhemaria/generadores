@@ -1,1 +1,1366 @@
+<!DOCTYPE html>
+<!--
+=============================================================
+  Generador de Comprensión Lectora — GEDparaHispanos.com
+=============================================================
+  Autor:       José M. Fernández ("Zhema")
+               ABE/ASE Math Master Teacher
+               Harry S. Truman College — City Colleges of Chicago
+  Sitio:       https://GEDparaHispanos.com
+  Repositorio: https://github.com/zhemaria/zhemaria.github.io
+  Versión:     1.0  (abril 2025)
 
+  LICENCIA: Creative Commons Atribución-NoComercial 4.0 Internacional
+            CC BY-NC 4.0
+            https://creativecommons.org/licenses/by-nc/4.0/deed.es
+
+  Eres libre de:
+    Compartir — copiar y redistribuir en cualquier medio o formato
+    Adaptar   — remezclar, transformar y construir a partir del material
+
+  Bajo los siguientes términos:
+    Atribución  — Debes dar crédito al autor original (Zhema /
+                  GEDparaHispanos.com), enlazar la licencia e indicar
+                  si realizaste cambios.
+    NoComercial — No puedes usar el material con fines comerciales.
+
+  Uso educativo libre y gratuito. Ideal para programas de educación
+  para adultos, preparación GED/HSE en español y plataformas LMS.
+
+  Tecnologías utilizadas:
+    Pollinations AI  (API gratuita de texto)  https://pollinations.ai
+    PDF.js           (extracción de PDF)      https://mozilla.github.io/pdf.js
+    Mammoth.js       (extracción de DOCX)     https://github.com/mwilliamson/mammoth.js
+=============================================================
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador GEDparaHispanos — Comprensión Lectora</title>
+    <meta name="author" content="José M. Fernández (Zhema) — GEDparaHispanos.com">
+    <meta name="license" content="CC BY-NC 4.0 — https://creativecommons.org/licenses/by-nc/4.0/">
+    <meta name="description" content="Generador de ejercicios de comprensión lectora para GED en español. 10 tipos de pregunta. Gratuito. Powered by Pollinations AI.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #e7f3ff 0%, #cde0f5 50%, #b8d4f0 100%);
+            min-height: 100vh;
+            padding: 1rem;
+            line-height: 1.5;
+            color: #1f2937;
+        }
+
+        .app-container { max-width: 1100px; margin: 0 auto; }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 6px -1px rgba(13,59,102,0.1), 0 2px 4px -1px rgba(13,59,102,0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e7f3ff;
+        }
+
+        .app-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .app-header-icon { font-size: 2.5rem; }
+        .app-header h1 { font-size: 1.6rem; color: #0d3b66; margin-bottom: 0.15rem; border: none; padding: 0; }
+        .app-header p { color: #6b7280; font-size: 0.9rem; }
+
+        .site-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, #0d3b66, #1a5490);
+            color: white; padding: 0.3rem 0.85rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 700; letter-spacing: 0.02em; margin-bottom: 0.5rem;
+        }
+
+        .pollinations-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: linear-gradient(135deg, #065f46, #047857);
+            color: white; padding: 0.5rem 1rem; border-radius: 10px;
+            font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem;
+            width: 100%;
+        }
+        .pollinations-badge a { color: #6ee7b7; text-decoration: none; }
+        .pollinations-badge a:hover { text-decoration: underline; }
+
+        /* SOURCE TABS */
+        .source-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+        .source-tab {
+            flex: 1; min-width: 140px; padding: 0.7rem 0.75rem;
+            border: 2px solid #e5e7eb; border-radius: 10px;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            transition: all 0.25s; background: #f9fafb; color: #374151;
+            text-align: center; user-select: none;
+        }
+        .source-tab:hover { border-color: #0d3b66; background: #f0f7ff; }
+        .source-tab.active { background: #0d3b66; color: white; border-color: #0d3b66; box-shadow: 0 4px 8px rgba(13,59,102,0.25); }
+
+        .source-panel { display: none; }
+        .source-panel.active { display: block; }
+
+        /* FILE UPLOAD */
+        .file-drop-zone {
+            border: 3px dashed #a4c8f0; border-radius: 12px;
+            padding: 2rem; text-align: center; cursor: pointer;
+            transition: all 0.25s; background: #f0f7ff; position: relative;
+        }
+        .file-drop-zone:hover, .file-drop-zone.dragover { border-color: #0d3b66; background: #e7f3ff; }
+        .file-drop-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .file-drop-zone .drop-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .file-drop-zone .drop-text { color: #1a5490; font-weight: 600; font-size: 0.95rem; }
+        .file-drop-zone .drop-hint { color: #6b7280; font-size: 0.8rem; margin-top: 0.3rem; }
+        .file-status {
+            margin-top: 0.75rem; padding: 0.65rem 1rem; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600; display: none;
+        }
+        .file-status.ok { background: #f0fdf4; border: 1px solid #86efac; color: #065f46; display: block; }
+        .file-status.err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; display: block; }
+        .file-status.loading { background: #e7f3ff; border: 1px solid #a4c8f0; color: #1a5490; display: block; }
+
+        /* URL */
+        .url-section { }
+        .url-row { display: flex; gap: 0.5rem; }
+        .url-row input { flex: 1; padding: 0.65rem 1rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; }
+        .url-row input:focus { outline: none; border-color: #1a5490; }
+        .url-btn { padding: 0.65rem 1rem; background: #0d3b66; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 0.9rem; }
+        .url-btn:hover { background: #1a5490; }
+        .url-warning { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 0.65rem 0.9rem; font-size: 0.82rem; color: #92400e; margin-top: 0.5rem; }
+        .url-preview { margin-top: 0.75rem; padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.82rem; color: #374151; max-height: 120px; overflow-y: auto; white-space: pre-wrap; display: none; }
+
+        /* SUBTYPES */
+        .subtype-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem; margin-top: 0.5rem; }
+        .subtype-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 0.85rem; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s; user-select: none; font-size: 0.88rem; }
+        .subtype-item:hover { border-color: #1a5490; }
+        .subtype-item.selected { background: #e7f3ff; border-color: #1a5490; }
+        .subtype-item input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: #0d3b66; flex-shrink: 0; }
+
+        .select-helpers { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+        .helper-btn { padding: 0.2rem 0.65rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; color: #374151; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+        .helper-btn:hover { background: #e7f3ff; border-color: #1a5490; }
+
+        .field-group { margin-bottom: 1rem; }
+        .field-label { display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 0.35rem; }
+        .field-input, .field-select, .field-textarea { width: 100%; padding: 0.65rem 1rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s; font-family: inherit; }
+        .field-input:focus, .field-select:focus, .field-textarea:focus { outline: none; border-color: #1a5490; box-shadow: 0 0 0 3px rgba(26,84,144,0.1); }
+        .field-textarea { resize: vertical; min-height: 130px; }
+
+        .config-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: end; }
+        .config-item { flex: 1; min-width: 140px; }
+        .config-item input[type="number"], .config-item select { width: 100%; padding: 0.5rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; }
+        .config-item input:focus, .config-item select:focus { outline: none; border-color: #1a5490; }
+
+        /* PALETAS */
+        .paleta-section { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+        .paleta-section-title { font-size: 0.9rem; font-weight: 700; color: #374151; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+        .paleta-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+        .paleta-swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; position: relative; flex-shrink: 0; }
+        .paleta-swatch:hover { transform: scale(1.18); }
+        .paleta-swatch.active { border-color: white; box-shadow: 0 0 0 3px #374151, 0 2px 8px rgba(0,0,0,0.25); transform: scale(1.12); }
+        .paleta-swatch-label { font-size: 0.72rem; color: #6b7280; text-align: center; margin-top: 0.15rem; width: 44px; }
+        .paleta-swatch-wrap { display: flex; flex-direction: column; align-items: center; }
+        .paleta-divider { width: 1px; height: 38px; background: #d1d5db; margin: 0 0.25rem; }
+        .paleta-custom-wrap { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.85rem; border: 2px solid #e5e7eb; border-radius: 20px; cursor: pointer; background: white; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; color: #374151; }
+        .paleta-custom-wrap:hover { border-color: #1a5490; }
+        .paleta-custom-wrap.active { border-color: #0d3b66; background: #e7f3ff; color: #0d3b66; }
+        .paleta-custom-wrap input[type="color"] { width: 26px; height: 26px; border: none; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
+
+        /* ADAPTACIÓN */
+        .adaptacion-section { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+        .adaptacion-section-title { font-size: 0.9rem; font-weight: 700; color: #14532d; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+        .radio-group { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .radio-item { flex: 1; min-width: 200px; padding: 0.75rem 1rem; border: 2px solid #d1fae5; border-radius: 9px; cursor: pointer; text-align: center; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; background: white; color: #374151; user-select: none; }
+        .radio-item:hover { border-color: #059669; background: #f0fdf4; }
+        .radio-item.active { background: #065f46; color: white; border-color: #065f46; box-shadow: 0 3px 8px rgba(6,95,70,0.25); }
+        .radio-item small { display: block; font-weight: 400; font-size: 0.78rem; margin-top: 0.2rem; opacity: 0.8; }
+        .parrafos-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: white; border-radius: 8px; border: 1px solid #86efac; flex-wrap: wrap; }
+        .parrafos-row label { font-size: 0.88rem; font-weight: 600; color: #14532d; white-space: nowrap; }
+        .parrafos-row select { padding: 0.4rem 0.75rem; border: 2px solid #86efac; border-radius: 7px; font-size: 0.9rem; background: white; color: #065f46; font-weight: 600; }
+        .parrafos-row select:focus { outline: none; border-color: #059669; }
+
+        .gen-btn { width: 100%; padding: 0.9rem 1.5rem; background: #0d3b66; color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+        .gen-btn:hover { background: #1a5490; box-shadow: 0 4px 12px rgba(13,59,102,0.3); }
+        .gen-btn:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; }
+
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.9rem; }
+        .results-area { margin-top: 1.5rem; }
+        .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+        .output-header h2 { font-size: 1.15rem; color: #0d3b66; display: flex; align-items: center; gap: 0.5rem; border: none; padding: 0; margin: 0; }
+        .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .action-btn { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .action-btn.primary { background: #0d3b66; color: white; }
+        .action-btn.primary:hover { background: #1a5490; }
+        .action-btn.secondary { background: #e7f3ff; color: #0d3b66; }
+        .action-btn.secondary:hover { background: #cde0f5; }
+        .action-btn.green { background: #d1fae5; color: #065f46; }
+        .action-btn.green:hover { background: #a7f3d0; }
+
+        pre.code-output { background: #111827; color: #93c5fd; padding: 1rem; border-radius: 10px; overflow-x: auto; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 0.82rem; white-space: pre-wrap; word-wrap: break-word; max-height: 450px; overflow-y: auto; line-height: 1.5; }
+        .preview-frame { width: 100%; min-height: 600px; border: 2px solid #0d3b66; border-radius: 10px; background: white; }
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .info-note { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.875rem; color: #166534; }
+        .info-note strong { color: #14532d; }
+
+        .app-footer { text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1.5rem; padding-bottom: 1rem; }
+        .app-footer a { color: #0d3b66; font-weight: 600; text-decoration: none; }
+        .app-footer a:hover { text-decoration: underline; }
+
+        .section-title { font-size: 0.9rem; font-weight: 700; color: #374151; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
+
+        @media (max-width: 768px) {
+            body { padding: 0.75rem; }
+            .app-header h1 { font-size: 1.3rem; }
+            .source-tab { min-width: 120px; font-size: 0.82rem; padding: 0.6rem 0.5rem; }
+            .subtype-grid { grid-template-columns: 1fr 1fr; }
+            .config-row { flex-direction: column; }
+            .radio-item { min-width: 100%; }
+        }
+        @media (max-width: 480px) {
+            .subtype-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- HEADER -->
+    <div class="card">
+        <div class="app-header">
+            <span class="app-header-icon">🌎</span>
+            <div>
+                <div class="site-badge">🎓 GEDparaHispanos.com</div>
+                <h1>Generador de comprensión lectora — GED</h1>
+                <p>10 tipos de pregunta • Textos propios o generados por IA • Gratuito — Por Zhema</p>
+            </div>
+        </div>
+
+        <div class="pollinations-badge">
+            🌸 Impulsado por <strong style="margin:0 0.3rem">Pollinations AI</strong> — API gratuita, sin cuenta ni clave necesaria.
+            &nbsp;<a href="https://pollinations.ai" target="_blank">pollinations.ai →</a>
+        </div>
+
+        <div class="info-note">
+            ✅ <strong>Sin cuentas ni pagos:</strong> usa la API gratuita de Pollinations. Comparte este archivo con tus colegas — solo necesitan abrirlo en el navegador.
+        </div>
+
+        <!-- ===== FUENTE DEL TEXTO ===== -->
+        <div class="field-group">
+            <div class="section-title">📚 Fuente del texto</div>
+            <div class="source-tabs">
+                <div class="source-tab active" onclick="setSource('auto')" id="stab-auto">🤖 IA genera el texto</div>
+                <div class="source-tab" onclick="setSource('paste')" id="stab-paste">📋 Pegar texto</div>
+                <div class="source-tab" onclick="setSource('file')" id="stab-file">📁 Subir archivo</div>
+                <div class="source-tab" onclick="setSource('url')" id="stab-url">🌐 Enlace web</div>
+            </div>
+
+            <!-- AUTO -->
+            <div class="source-panel active" id="spanel-auto">
+                <div class="config-row" style="margin-bottom:0.5rem">
+                    <div class="config-item">
+                        <span class="field-label">Materia (opcional)</span>
+                        <select class="field-select" id="auto-materia">
+                            <option value="">Cualquier tema</option>
+                            <option value="ciencias">Ciencias</option>
+                            <option value="estudios_sociales">Estudios Sociales</option>
+                            <option value="literatura">Literatura</option>
+                            <option value="historia">Historia</option>
+                            <option value="salud">Salud</option>
+                            <option value="tecnologia">Tecnología</option>
+                            <option value="medio_ambiente">Medio Ambiente</option>
+                            <option value="economia">Economía</option>
+                        </select>
+                    </div>
+                    <div class="config-item" style="flex:2">
+                        <span class="field-label">Tema específico (opcional)</span>
+                        <input class="field-input" type="text" id="auto-tema" placeholder="Ej: La fotosíntesis, La Revolución Mexicana, El cambio climático...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASTE -->
+            <div class="source-panel" id="spanel-paste">
+                <textarea class="field-textarea" id="paste-texto" placeholder="Pega aquí el texto sobre el cual deseas generar las preguntas de comprensión lectora..."></textarea>
+            </div>
+
+            <!-- FILE -->
+            <div class="source-panel" id="spanel-file">
+                <div class="file-drop-zone" id="fileDropZone">
+                    <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx" onchange="handleFileSelect(event)">
+                    <div class="drop-icon">📄</div>
+                    <div class="drop-text">Haz clic aquí o arrastra tu archivo</div>
+                    <div class="drop-hint">Formatos aceptados: .txt • .pdf • .docx (.doc)</div>
+                </div>
+                <div class="file-status" id="fileStatus"></div>
+                <textarea class="field-textarea hidden" id="file-texto-preview" style="margin-top:0.75rem;min-height:100px;font-size:0.82rem;background:#f9fafb" placeholder="Texto extraído del archivo..." readonly></textarea>
+            </div>
+
+            <!-- URL -->
+            <div class="source-panel" id="spanel-url">
+                <div class="url-section">
+                    <div class="url-row">
+                        <input type="url" id="url-input" placeholder="https://es.wikipedia.org/wiki/..." >
+                        <button class="url-btn" onclick="fetchURL()">🔍 Cargar</button>
+                    </div>
+                    <div class="url-warning">
+                        ⚠️ <strong>Nota:</strong> Solo funciona con páginas de acceso público que permitan peticiones externas (Wikipedia funciona bien). Muchos sitios bloquean este tipo de acceso por razones de seguridad.
+                    </div>
+                    <div class="url-preview" id="url-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TIPOS DE PREGUNTA ===== -->
+        <div class="field-group">
+            <div class="section-title">🎯 Tipos de pregunta (selecciona uno o más)</div>
+            <div class="select-helpers">
+                <button class="helper-btn" onclick="toggleAll(true)">✅ Todos</button>
+                <button class="helper-btn" onclick="toggleAll(false)">❌ Ninguno</button>
+            </div>
+            <div class="subtype-grid" id="subtypes-comprension">
+                <div class="subtype-item selected" onclick="toggleSub(this)">
+                    <input type="checkbox" value="idea_principal" checked> 💡 Idea principal y detalles
+                </div>
+                <div class="subtype-item selected" onclick="toggleSub(this)">
+                    <input type="checkbox" value="inferencia" checked> 🔍 Inferencia
+                </div>
+                <div class="subtype-item selected" onclick="toggleSub(this)">
+                    <input type="checkbox" value="causa_efecto" checked> ↔️ Causa y efecto
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="comparar_contrastar"> ⚖️ Comparar y contrastar
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="hechos_opiniones"> 📰 Hechos y opiniones
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="secuencia"> 🔢 Ordenar (Secuencia)
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="evidencias"> 📌 Fuentes de información (evidencias)
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="punto_de_vista"> 👁️ Punto de vista
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="conclusiones"> 🏁 Extraer conclusiones
+                </div>
+                <div class="subtype-item" onclick="toggleSub(this)">
+                    <input type="checkbox" value="generalizar"> 🌐 Generalizar
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURACIÓN -->
+        <div class="config-row">
+            <div class="config-item">
+                <span class="field-label">Número de preguntas</span>
+                <input type="number" id="numPreguntas" min="3" max="10" value="5">
+            </div>
+            <div class="config-item">
+                <span class="field-label">Opciones por pregunta</span>
+                <select id="numOpciones">
+                    <option value="3">3 opciones</option>
+                    <option value="4" selected>4 opciones</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <span class="field-label">Nivel NRS</span>
+                <select id="nivelNRS">
+                    <option value="basico">Básico (NRS 1-2)</option>
+                    <option value="intermedio" selected>Intermedio (NRS 3-4)</option>
+                    <option value="avanzado">Avanzado (NRS 5-6)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PALETAS DE COLOR -->
+        <div class="paleta-section">
+            <div class="paleta-section-title">🎨 Paleta de colores del ejercicio generado</div>
+            <div class="paleta-grid" id="paletaGrid">
+
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch active" data-paleta="azul" onclick="setPaleta('azul')"
+                         style="background: linear-gradient(135deg,#0d3b66,#1a5490)" title="Azul marino"></div>
+                    <span class="paleta-swatch-label">Marino</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="verde" onclick="setPaleta('verde')"
+                         style="background: linear-gradient(135deg,#065f46,#047857)" title="Verde esmeralda"></div>
+                    <span class="paleta-swatch-label">Esmeralda</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="violeta" onclick="setPaleta('violeta')"
+                         style="background: linear-gradient(135deg,#4c1d95,#6d28d9)" title="Violeta"></div>
+                    <span class="paleta-swatch-label">Violeta</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="coral" onclick="setPaleta('coral')"
+                         style="background: linear-gradient(135deg,#9b1c1c,#dc2626)" title="Coral"></div>
+                    <span class="paleta-swatch-label">Coral</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="turquesa" onclick="setPaleta('turquesa')"
+                         style="background: linear-gradient(135deg,#155e75,#0891b2)" title="Turquesa"></div>
+                    <span class="paleta-swatch-label">Turquesa</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="cafe" onclick="setPaleta('cafe')"
+                         style="background: linear-gradient(135deg,#44260d,#92400e)" title="Café"></div>
+                    <span class="paleta-swatch-label">Café</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="rosa" onclick="setPaleta('rosa')"
+                         style="background: linear-gradient(135deg,#831843,#be185d)" title="Rosa"></div>
+                    <span class="paleta-swatch-label">Rosa</span>
+                </div>
+                <div class="paleta-swatch-wrap">
+                    <div class="paleta-swatch" data-paleta="pizarra" onclick="setPaleta('pizarra')"
+                         style="background: linear-gradient(135deg,#1e3a5f,#334155)" title="Pizarra"></div>
+                    <span class="paleta-swatch-label">Pizarra</span>
+                </div>
+
+                <div class="paleta-divider"></div>
+
+                <div class="paleta-custom-wrap" id="customPaletaWrap" onclick="setPaleta('custom')">
+                    <input type="color" id="customColor1" value="#0d3b66" title="Color principal"
+                           onclick="event.stopPropagation()" onchange="onCustomColorChange()">
+                    <input type="color" id="customColor2" value="#fbbf24" title="Color de acento"
+                           onclick="event.stopPropagation()" onchange="onCustomColorChange()">
+                    <span>🎨 Personalizado</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADAPTACIÓN -->
+        <div class="adaptacion-section">
+            <div class="adaptacion-section-title">📄 Tratamiento del texto</div>
+            <div class="radio-group">
+                <div class="radio-item active" data-mode="respetar" onclick="setAdaptacion('respetar')">
+                    📋 Respetar texto tal como está
+                    <small>La IA usa tu texto sin modificarlo</small>
+                </div>
+                <div class="radio-item" data-mode="adaptar" onclick="setAdaptacion('adaptar')">
+                    ✏️ Adaptar / crear texto nuevo
+                    <small>La IA reescribe tu texto o crea uno desde cero</small>
+                </div>
+            </div>
+            <div class="parrafos-row hidden" id="parrafosRow">
+                <label>📑 Número de párrafos:</label>
+                <select id="numParrafos">
+                    <option value="2">2 párrafos</option>
+                    <option value="3">3 párrafos</option>
+                    <option value="4" selected>4 párrafos</option>
+                    <option value="5">5 párrafos</option>
+                </select>
+                <small style="color:#14532d;font-size:0.8rem;">(Al generar o adaptar)</small>
+            </div>
+        </div>
+
+        <button class="gen-btn" id="btnGenerar" onclick="generar()">
+            🚀 Generar ejercicio de comprensión lectora
+        </button>
+
+        <div id="errorBox" class="error-box hidden"></div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div id="resultsArea" class="results-area hidden">
+        <div class="card fade-in">
+            <div class="output-header">
+                <h2>🌐 Código HTML (autónomo, listo para publicar)</h2>
+                <div class="btn-group">
+                    <button class="action-btn secondary" onclick="copiarCodigo()">📋 Copiar código</button>
+                    <button class="action-btn primary" onclick="descargarHTML()">⬇️ Descargar .html</button>
+                </div>
+            </div>
+            <pre class="code-output" id="codeOutput"></pre>
+        </div>
+
+        <div class="card fade-in">
+            <div class="output-header">
+                <h2>👁️ Vista previa</h2>
+                <button class="action-btn green" onclick="abrirEnNuevaPestana()">🔗 Abrir en nueva pestaña</button>
+            </div>
+            <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+    </div>
+
+    <div class="app-footer">
+        Generador de ejercicios para <a href="https://GEDparaHispanos.com" target="_blank">GEDparaHispanos.com</a>
+        — Comprensión Lectora GED — Adult Education — Truman College — Por <strong>Zhema</strong><br>
+        Impulsado por <a href="https://pollinations.ai" target="_blank">Pollinations AI</a> (gratuito)
+        &nbsp;·&nbsp;
+        <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.es" target="_blank"
+           title="Creative Commons Atribución-NoComercial 4.0 Internacional">© 2025 CC BY-NC 4.0</a>
+        — Libre para uso educativo no comercial con atribución al autor.
+    </div>
+</div>
+
+<script>
+// =============================================
+// ESTADO GLOBAL
+// =============================================
+var currentSource     = 'auto';
+var currentPaleta     = 'azul';
+var currentAdaptacion = 'respetar';
+var generatedHTML     = '';
+var lastTitulo        = '';
+var lastTypes         = [];
+var extractedText     = '';   // texto de archivo o URL
+var savedTexto        = '';
+var savedTitulo       = '';
+var savedSubtitulo    = '';
+
+// =============================================
+// PALETAS
+// =============================================
+var PALETAS = {
+    azul:     { primary:'#0d3b66', secondary:'#1a5490', light:'#e7f3ff', lightBorder:'#a4c8f0', accent:'#fbbf24', accentHover:'#fcd34d', accentDark:'#0d3b66', shadow:'rgba(13,59,102,0.1)', shadowDeep:'rgba(13,59,102,0.3)' },
+    verde:    { primary:'#065f46', secondary:'#047857', light:'#ecfdf5', lightBorder:'#6ee7b7', accent:'#34d399', accentHover:'#6ee7b7', accentDark:'#065f46', shadow:'rgba(6,95,70,0.1)',  shadowDeep:'rgba(6,95,70,0.3)' },
+    violeta:  { primary:'#4c1d95', secondary:'#6d28d9', light:'#f5f3ff', lightBorder:'#c4b5fd', accent:'#a78bfa', accentHover:'#c4b5fd', accentDark:'#4c1d95', shadow:'rgba(76,29,149,0.1)', shadowDeep:'rgba(76,29,149,0.3)' },
+    coral:    { primary:'#9b1c1c', secondary:'#b91c1c', light:'#fff1f2', lightBorder:'#fca5a5', accent:'#fb923c', accentHover:'#fdba74', accentDark:'#9b1c1c', shadow:'rgba(155,28,28,0.1)',  shadowDeep:'rgba(155,28,28,0.3)' },
+    turquesa: { primary:'#155e75', secondary:'#0e7490', light:'#ecfeff', lightBorder:'#67e8f9', accent:'#22d3ee', accentHover:'#67e8f9', accentDark:'#155e75', shadow:'rgba(21,94,117,0.1)',  shadowDeep:'rgba(21,94,117,0.3)' },
+    cafe:     { primary:'#44260d', secondary:'#78350f', light:'#fffbeb', lightBorder:'#fcd34d', accent:'#d97706', accentHover:'#f59e0b', accentDark:'#44260d', shadow:'rgba(68,38,13,0.1)',  shadowDeep:'rgba(68,38,13,0.3)' },
+    rosa:     { primary:'#831843', secondary:'#9d174d', light:'#fdf2f8', lightBorder:'#f9a8d4', accent:'#f472b6', accentHover:'#f9a8d4', accentDark:'#831843', shadow:'rgba(131,24,67,0.1)', shadowDeep:'rgba(131,24,67,0.3)' },
+    pizarra:  { primary:'#1e3a5f', secondary:'#334155', light:'#f1f5f9', lightBorder:'#94a3b8', accent:'#38bdf8', accentHover:'#7dd3fc', accentDark:'#1e3a5f', shadow:'rgba(30,58,95,0.1)',  shadowDeep:'rgba(30,58,95,0.3)' },
+    custom:   null
+};
+
+function derivarPaleta(primaryHex, accentHex) {
+    var toRGB = function(h) { return { r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16) }; };
+    var toHex = function(c) { return '#'+[c.r,c.g,c.b].map(function(x){ return Math.min(255,Math.max(0,Math.round(x))).toString(16).padStart(2,'0'); }).join(''); };
+    var lerp  = function(a,b,t) { return a+(b-a)*t; };
+    var p = toRGB(primaryHex);
+    var a = toRGB(accentHex);
+    return {
+        primary:    primaryHex,
+        secondary:  toHex({r:lerp(p.r,255,0.18),g:lerp(p.g,255,0.18),b:lerp(p.b,255,0.18)}),
+        light:      toHex({r:lerp(p.r,255,0.88),g:lerp(p.g,255,0.88),b:lerp(p.b,255,0.88)}),
+        lightBorder:toHex({r:lerp(p.r,255,0.60),g:lerp(p.g,255,0.60),b:lerp(p.b,255,0.60)}),
+        accent:     accentHex,
+        accentHover:toHex({r:lerp(a.r,255,0.2),g:lerp(a.g,255,0.2),b:lerp(a.b,255,0.2)}),
+        accentDark: primaryHex,
+        shadow:     'rgba('+p.r+','+p.g+','+p.b+',0.1)',
+        shadowDeep: 'rgba('+p.r+','+p.g+','+p.b+',0.3)'
+    };
+}
+
+function setPaleta(name) {
+    currentPaleta = name;
+    document.querySelectorAll('.paleta-swatch').forEach(function(s) {
+        s.classList.toggle('active', s.dataset.paleta === name);
+    });
+    document.getElementById('customPaletaWrap').classList.toggle('active', name === 'custom');
+}
+
+function onCustomColorChange() { setPaleta('custom'); }
+
+function getCurrentPalette() {
+    if (currentPaleta === 'custom') {
+        return derivarPaleta(
+            document.getElementById('customColor1').value,
+            document.getElementById('customColor2').value
+        );
+    }
+    return PALETAS[currentPaleta];
+}
+
+// =============================================
+// FUENTE / SOURCE SWITCHING
+// =============================================
+function setSource(src) {
+    currentSource = src;
+    ['auto','paste','file','url'].forEach(function(s) {
+        document.getElementById('stab-' + s).classList.toggle('active', s === src);
+        document.getElementById('spanel-' + s).classList.toggle('active', s === src);
+    });
+    // Gestionar adaptación: solo tiene sentido con "auto" o cuando se adapta texto externo
+    // Para URL/file siempre mostrar la opción de adaptar
+}
+
+// =============================================
+// FILE READING
+// =============================================
+function loadScript(src) {
+    return new Promise(function(resolve, reject) {
+        if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+        var s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = function() { reject(new Error('No se pudo cargar: ' + src)); };
+        document.head.appendChild(s);
+    });
+}
+
+function setFileStatus(msg, type) {
+    var el = document.getElementById('fileStatus');
+    el.textContent = msg;
+    el.className = 'file-status ' + type;
+}
+
+function showExtractedText(text) {
+    var preview = document.getElementById('file-texto-preview');
+    preview.value = text.substring(0, 2000) + (text.length > 2000 ? '\n\n[...texto truncado en vista previa, se usa completo para generar...]' : '');
+    preview.classList.remove('hidden');
+}
+
+async function handleFileSelect(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var ext = file.name.split('.').pop().toLowerCase();
+    setFileStatus('⏳ Leyendo archivo: ' + file.name + '...', 'loading');
+    extractedText = '';
+
+    try {
+        if (ext === 'txt') {
+            extractedText = await readTextFile(file);
+            setFileStatus('✅ Texto cargado: ' + file.name + ' (' + extractedText.length + ' caracteres)', 'ok');
+            showExtractedText(extractedText);
+
+        } else if (ext === 'pdf') {
+            setFileStatus('⏳ Cargando lector de PDF...', 'loading');
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            setFileStatus('⏳ Extrayendo texto del PDF...', 'loading');
+            extractedText = await extractPDFText(file);
+            setFileStatus('✅ PDF cargado: ' + file.name + ' (' + extractedText.length + ' caracteres)', 'ok');
+            showExtractedText(extractedText);
+
+        } else if (ext === 'docx' || ext === 'doc') {
+            setFileStatus('⏳ Cargando lector de Word...', 'loading');
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+            setFileStatus('⏳ Extrayendo texto del documento Word...', 'loading');
+            extractedText = await extractDOCXText(file);
+            setFileStatus('✅ Word cargado: ' + file.name + ' (' + extractedText.length + ' caracteres)', 'ok');
+            showExtractedText(extractedText);
+
+        } else {
+            setFileStatus('❌ Formato no compatible. Usa: .txt, .pdf, .docx', 'err');
+        }
+    } catch(err) {
+        setFileStatus('❌ Error al leer el archivo: ' + err.message, 'err');
+        console.error(err);
+    }
+}
+
+// Drag & drop
+var dropZone = document.getElementById('fileDropZone');
+dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+        var fakeEvent = { target: { files: [file] } };
+        handleFileSelect(fakeEvent);
+    }
+});
+
+function readTextFile(file) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function(e) { resolve(e.target.result); };
+        reader.onerror = function() { reject(new Error('No se pudo leer el archivo.')); };
+        reader.readAsText(file, 'UTF-8');
+    });
+}
+
+async function extractPDFText(file) {
+    var arrayBuffer = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    var text = '';
+    for (var i = 1; i <= Math.min(pdf.numPages, 20); i++) {
+        var page = await pdf.getPage(i);
+        var content = await page.getTextContent();
+        var pageText = content.items.map(function(item){ return item.str; }).join(' ');
+        text += pageText + '\n\n';
+    }
+    return text.trim();
+}
+
+async function extractDOCXText(file) {
+    var arrayBuffer = await file.arrayBuffer();
+    var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+    return result.value.trim();
+}
+
+// =============================================
+// URL FETCH
+// =============================================
+async function fetchURL() {
+    var url = document.getElementById('url-input').value.trim();
+    if (!url) { showError('Ingresa una URL válida.'); return; }
+    if (!url.startsWith('http')) url = 'https://' + url;
+
+    var preview = document.getElementById('url-preview');
+    preview.style.display = 'block';
+    preview.textContent = '⏳ Cargando página...';
+    extractedText = '';
+
+    try {
+        // Intentar con el proxy allorigins
+        var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+        var resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var data = await resp.json();
+        var html = data.contents || '';
+
+        // Extraer texto: quitar scripts, estilos y etiquetas HTML
+        var div = document.createElement('div');
+        // Remover scripts y styles
+        html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ');
+        html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ');
+        html = html.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, ' ');
+        html = html.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, ' ');
+        html = html.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, ' ');
+        div.innerHTML = html;
+        var rawText = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+
+        // Limitar a ~8000 caracteres para no sobrecargar el prompt
+        extractedText = rawText.substring(0, 8000);
+        if (!extractedText || extractedText.length < 100) {
+            throw new Error('No se pudo extraer texto útil de esta página.');
+        }
+
+        preview.textContent = '✅ Texto cargado (' + extractedText.length + ' caracteres):\n\n' + extractedText.substring(0, 500) + (extractedText.length > 500 ? '...' : '');
+        preview.style.color = '#166534';
+    } catch(err) {
+        preview.textContent = '❌ Error: ' + err.message + '\n\nAlgunas páginas bloquean este tipo de acceso. Intenta con Wikipedia u otras páginas públicas.';
+        preview.style.color = '#dc2626';
+        extractedText = '';
+    }
+}
+
+// =============================================
+// ADAPTACIÓN
+// =============================================
+function setAdaptacion(mode) {
+    currentAdaptacion = mode;
+    document.querySelectorAll('.radio-item').forEach(function(r) {
+        r.classList.toggle('active', r.dataset.mode === mode);
+    });
+    document.getElementById('parrafosRow').classList.toggle('hidden', mode !== 'adaptar');
+}
+
+function getNumParrafos() {
+    return parseInt(document.getElementById('numParrafos').value) || 4;
+}
+
+// =============================================
+// TIPOS DE PREGUNTA
+// =============================================
+function toggleSub(el) {
+    var cb = el.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    el.classList.toggle('selected', cb.checked);
+}
+
+function toggleAll(selectAll) {
+    document.querySelectorAll('#subtypes-comprension .subtype-item').forEach(function(el) {
+        var cb = el.querySelector('input[type="checkbox"]');
+        cb.checked = selectAll;
+        el.classList.toggle('selected', selectAll);
+    });
+}
+
+function getSelected() {
+    var arr = [];
+    document.querySelectorAll('#subtypes-comprension input[type="checkbox"]:checked').forEach(function(cb) {
+        arr.push(cb.value);
+    });
+    return arr;
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showError(msg) {
+    var box = document.getElementById('errorBox');
+    box.textContent = msg;
+    box.classList.remove('hidden');
+}
+
+function showErrorConReintento(msg) {
+    var box = document.getElementById('errorBox');
+    var btn = document.createElement('button');
+    btn.textContent = '🔄 Reintentar solo las preguntas';
+    btn.style.cssText = 'margin-top:0.6rem;padding:0.45rem 1rem;background:#dc2626;color:white;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:0.9rem;display:block;';
+    btn.onclick = retryPreguntas;
+    box.textContent = '';
+    box.appendChild(document.createTextNode(msg));
+    box.appendChild(btn);
+    box.classList.remove('hidden');
+}
+
+function hideError() {
+    document.getElementById('errorBox').classList.add('hidden');
+}
+
+// =============================================
+// JSON PARSER
+// =============================================
+function extraerJSON(raw) {
+    raw = raw.trim();
+    if (raw.startsWith('```')) {
+        raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+    }
+    var startIdx = raw.indexOf('{');
+    if (startIdx === -1) throw new Error('No se encontró JSON en la respuesta.');
+    var depth = 0, inStr = false, esc = false, endIdx = -1;
+    for (var i = startIdx; i < raw.length; i++) {
+        var ch = raw[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\' && inStr) { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (!inStr) {
+            if (ch === '{') depth++;
+            else if (ch === '}') { depth--; if (depth === 0) { endIdx = i; break; } }
+        }
+    }
+    if (endIdx === -1) throw new Error('JSON incompleto — respuesta cortada. Reduce el número de preguntas e intenta de nuevo.');
+    var jsonStr = raw.substring(startIdx, endIdx + 1);
+    var cleaned = '';
+    inStr = false; esc = false;
+    for (var j = 0; j < jsonStr.length; j++) {
+        var c = jsonStr[j];
+        if (esc) { cleaned += c; esc = false; continue; }
+        if (c === '\\' && inStr) { esc = true; cleaned += c; continue; }
+        if (c === '"') { inStr = !inStr; cleaned += c; continue; }
+        if (inStr) {
+            var code = c.charCodeAt(0);
+            if (code === 10) { cleaned += '\\n'; continue; }
+            if (code === 13) { continue; }
+            if (code === 9)  { cleaned += ' ';   continue; }
+            if (code < 32)   { cleaned += ' ';   continue; }
+        }
+        cleaned += c;
+    }
+    cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+    return JSON.parse(cleaned);
+}
+
+// =============================================
+// OBTENER TEXTO SEGÚN FUENTE
+// =============================================
+function getTextoFuente() {
+    if (currentSource === 'paste') {
+        return document.getElementById('paste-texto').value.trim();
+    } else if (currentSource === 'file') {
+        return extractedText;
+    } else if (currentSource === 'url') {
+        return extractedText;
+    }
+    return ''; // auto: la IA lo genera
+}
+
+// =============================================
+// DESCRIPTORES DE TIPOS
+// =============================================
+var TYPE_DESCS = {
+    idea_principal:      'IDEA PRINCIPAL Y DETALLES: identificar la idea central y los detalles de apoyo',
+    inferencia:          'INFERENCIA: deducir información implícita no dicha directamente',
+    causa_efecto:        'CAUSA Y EFECTO: identificar relaciones causales entre eventos o ideas',
+    comparar_contrastar: 'COMPARAR Y CONTRASTAR: identificar similitudes y diferencias',
+    hechos_opiniones:    'HECHOS Y OPINIONES: distinguir afirmaciones objetivas de subjetivas',
+    secuencia:           'ORDENAR / SECUENCIA: identificar el orden cronológico o lógico de eventos',
+    evidencias:          'FUENTES DE INFORMACIÓN / EVIDENCIAS: identificar qué evidencia apoya una afirmación',
+    punto_de_vista:      'PUNTO DE VISTA: identificar la perspectiva o postura del autor',
+    conclusiones:        'EXTRAER CONCLUSIONES: derivar una conclusión lógica a partir del texto',
+    generalizar:         'GENERALIZAR: formular una afirmación general basada en los detalles del texto'
+};
+
+// =============================================
+// LLAMADA A POLLINATIONS (base)
+// =============================================
+async function callPollinations(systemPrompt, userPrompt, useJson) {
+    var body = {
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user',   content: userPrompt   }
+        ],
+        model: 'openai',
+        seed: Math.floor(Math.random() * 99999)
+    };
+    if (useJson) body.jsonMode = true;
+
+    var resp = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+        var errText = '';
+        try { errText = await resp.text(); } catch(e){}
+        throw new Error('Error HTTP ' + resp.status + (errText ? ': ' + errText.substring(0,200) : ''));
+    }
+    return await resp.text();
+}
+
+// =============================================
+// PASO 1 — OBTENER / GENERAR TEXTO
+// =============================================
+async function obtenerTexto() {
+    var textoFuente = getTextoFuente();
+    var numParr     = getNumParrafos();
+    var nivel       = document.getElementById('nivelNRS').value;
+    var adaptar     = currentAdaptacion === 'adaptar';
+
+    var nivelVocab = { basico:'sencillo (NRS 1-2)', intermedio:'variado (NRS 3-4)', avanzado:'académico (NRS 5-6)' };
+
+    // Si hay texto externo y NO se pide adaptar → devolver tal cual
+    if (textoFuente && !adaptar) {
+        return textoFuente;
+    }
+
+    // Si hay texto externo y se pide adaptar → reescribir
+    var sysTexto, userTexto;
+    if (textoFuente && adaptar) {
+        sysTexto  = 'Eres redactor educativo. Reescribe el texto recibido en exactamente ' + numParr +
+                    ' párrafos bien estructurados para adultos hispanohablantes (vocabulario ' + nivelVocab[nivel] + ').' +
+                    ' Mantén el contenido esencial. Responde SOLO con el texto, sin títulos ni explicaciones.';
+        userTexto = 'TEXTO ORIGINAL:\n\n' + textoFuente;
+    } else {
+        // Auto: la IA crea el texto desde cero
+        var materia = document.getElementById('auto-materia').value;
+        var tema    = document.getElementById('auto-tema').value.trim();
+        sysTexto  = 'Eres redactor educativo. Escribe un texto informativo de exactamente ' + numParr +
+                    ' párrafos para adultos hispanohablantes que preparan el examen GED en español.' +
+                    ' Vocabulario ' + nivelVocab[nivel] + '. Texto fluido y bien estructurado.' +
+                    ' Responde SOLO con el texto, sin títulos ni explicaciones adicionales.';
+        userTexto = 'Escribe el texto';
+        if (materia) userTexto += ' sobre ' + materia;
+        if (tema)    userTexto += ', tema: "' + tema + '"';
+        userTexto += '. Exactamente ' + numParr + ' párrafos.';
+    }
+
+    var rawTexto = await callPollinations(sysTexto, userTexto, false);
+    return rawTexto.trim();
+}
+
+// =============================================
+// PASO 2 — GENERAR PREGUNTAS SOBRE UN TEXTO
+// =============================================
+async function generarPreguntas(texto) {
+    var numP   = parseInt(document.getElementById('numPreguntas').value) || 5;
+    var numO   = parseInt(document.getElementById('numOpciones').value)  || 4;
+    var nivel  = document.getElementById('nivelNRS').value;
+    var types  = getSelected();
+
+    var nivelDesc = {
+        basico:     'básico (NRS 1-2): oraciones simples, vocabulario cotidiano',
+        intermedio: 'intermedio (NRS 3-4): vocabulario variado, análisis moderado',
+        avanzado:   'avanzado (NRS 5-6): vocabulario académico, pensamiento crítico'
+    };
+
+    var tiposStr = types.map(function(t){ return '- ' + (TYPE_DESCS[t]||t); }).join('\n');
+    var tiposValores = types.join(' | ');
+
+    var opcPlantilla = [];
+    for (var k = 0; k < numO; k++) opcPlantilla.push('opción ' + (k+1));
+
+    var sysPreg =
+        'Eres experto en evaluación educativa para adultos hispanohablantes (GED en español).\n' +
+        'Se te proporciona un texto de lectura. Tu ÚNICA tarea: crear exactamente ' + numP + ' preguntas de opción múltiple.\n\n' +
+        'NIVEL: ' + nivelDesc[nivel] + '\n\n' +
+        'TIPOS A DISTRIBUIR EQUITATIVAMENTE:\n' + tiposStr + '\n\n' +
+        'REGLAS:\n' +
+        '- Exactamente ' + numP + ' preguntas, ' + numO + ' opciones cada una\n' +
+        '- Una sola opción correcta por pregunta\n' +
+        '- Distractores plausibles pero claramente incorrectos\n' +
+        '- respuestaCorrecta = índice 0-based (0 a ' + (numO-1) + ')\n' +
+        '- "tipoPreg" debe ser EXACTAMENTE uno de: ' + tiposValores + '\n' +
+        '- "explicacion" = 1-2 oraciones explicando la respuesta correcta\n' +
+        '- Español neutro latinoamericano\n\n' +
+        'RESPONDE SOLO CON ESTE JSON (nada más, ni antes ni después):\n' +
+        '{\n' +
+        '  "titulo": "Título descriptivo del ejercicio",\n' +
+        '  "subtitulo": "Subtítulo breve",\n' +
+        '  "instrucciones": "Lee el texto con atención y elige la mejor respuesta para cada pregunta.",\n' +
+        '  "preguntas": [\n' +
+        '    { "pregunta": "...", "opciones": [' + opcPlantilla.map(function(o){ return '"'+o+'"'; }).join(',') + '], "respuestaCorrecta": 0, "tipoPreg": "inferencia", "explicacion": "..." }\n' +
+        '  ]\n' +
+        '}\n\n' +
+        'CRÍTICO: JSON válido y parseable. Sin caracteres de control. Sin texto fuera del JSON.';
+
+    var userPreg = 'TEXTO DE LECTURA:\n\n' + texto + '\n\n' +
+                   'Genera exactamente ' + numP + ' preguntas con ' + numO + ' opciones cada una, mezclando los tipos indicados.';
+
+    var rawPreg = await callPollinations(sysPreg, userPreg, true);
+    return extraerJSON(rawPreg);
+}
+
+// =============================================
+// GENERAR — FLUJO EN DOS PASOS
+// =============================================
+async function generar() {
+    var types = getSelected();
+    if (types.length === 0) { showError('Selecciona al menos un tipo de pregunta.'); return; }
+
+    if (currentSource === 'file'  && !extractedText) { showError('Por favor sube un archivo primero.'); return; }
+    if (currentSource === 'url'   && !extractedText) { showError('Por favor carga una URL primero.'); return; }
+    if (currentSource === 'paste' && !document.getElementById('paste-texto').value.trim()) {
+        showError('Por favor pega el texto.'); return;
+    }
+
+    lastTypes = types.slice();
+    var btn = document.getElementById('btnGenerar');
+    btn.disabled = true;
+    hideError();
+    document.getElementById('resultsArea').classList.add('hidden');
+
+    try {
+        // — PASO 1: Obtener o generar el texto —
+        var textoFuente = getTextoFuente();
+        var needsGeneration = !textoFuente || currentAdaptacion === 'adaptar';
+
+        if (needsGeneration) {
+            btn.innerHTML = '<span class="spinner"></span> Paso 1/2 — Generando texto...';
+        } else {
+            btn.innerHTML = '<span class="spinner"></span> Paso 1/2 — Preparando texto...';
+        }
+
+        var texto = await obtenerTexto();
+        if (!texto || texto.length < 50) throw new Error('No se obtuvo un texto válido. Intenta de nuevo.');
+
+        // Guardar el texto para poder reintentar
+        savedTexto     = texto;
+        savedTitulo    = '';
+        savedSubtitulo = '';
+
+        // — PASO 2: Generar las preguntas —
+        btn.innerHTML = '<span class="spinner"></span> Paso 2/2 — Generando preguntas...';
+
+        var parsed = await generarPreguntas(texto);
+
+        if (!parsed.preguntas || parsed.preguntas.length === 0) {
+            showErrorConReintento(
+                '⚠️ El texto se generó correctamente pero las preguntas llegaron incompletas. ' +
+                'Pulsa el botón para pedirlas de nuevo (el texto ya está guardado).'
+            );
+            return;
+        }
+
+        // Ensamblar el objeto completo
+        parsed.texto = texto;
+        lastTitulo    = parsed.titulo || '';
+        generatedHTML = buildExerciseHTML(parsed);
+        displayResults();
+
+    } catch(err) {
+        showError('Error: ' + err.message +
+            '\n\nPollinations es gratuito; a veces está lento. Espera unos segundos y vuelve a intentar.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Generar ejercicio de comprensión lectora';
+    }
+}
+
+// =============================================
+// REINTENTAR SOLO PREGUNTAS (Paso 2 de nuevo)
+// =============================================
+async function retryPreguntas() {
+    if (!savedTexto || savedTexto.length < 50) {
+        showError('No hay texto guardado. Pulsa "Generar" para empezar desde el principio.');
+        return;
+    }
+
+    var btn = document.getElementById('btnGenerar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Regenerando preguntas...';
+    hideError();
+
+    try {
+        var parsed = await generarPreguntas(savedTexto);
+
+        if (!parsed.preguntas || parsed.preguntas.length === 0) {
+            throw new Error('Las preguntas volvieron vacías. Reduce el número de preguntas e intenta de nuevo.');
+        }
+
+        parsed.texto = savedTexto;
+        if (!parsed.titulo    && savedTitulo)    parsed.titulo    = savedTitulo;
+        if (!parsed.subtitulo && savedSubtitulo) parsed.subtitulo = savedSubtitulo;
+
+        lastTitulo    = parsed.titulo || '';
+        generatedHTML = buildExerciseHTML(parsed);
+        displayResults();
+    } catch(err) {
+        showError('Error al regenerar preguntas: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Generar ejercicio de comprensión lectora';
+    }
+}
+
+// =============================================
+// BUILD EXERCISE HTML
+// =============================================
+var TYPE_LABELS = {
+    idea_principal:      '💡 Idea principal',
+    inferencia:          '🔍 Inferencia',
+    causa_efecto:        '↔️ Causa y efecto',
+    comparar_contrastar: '⚖️ Comparar y contrastar',
+    hechos_opiniones:    '📰 Hechos y opiniones',
+    secuencia:           '🔢 Secuencia',
+    evidencias:          '📌 Evidencias',
+    punto_de_vista:      '👁️ Punto de vista',
+    conclusiones:        '🏁 Conclusiones',
+    generalizar:         '🌐 Generalizar'
+};
+
+function buildExerciseHTML(data) {
+    var preguntas     = data.preguntas     || [];
+    var titulo        = data.titulo        || 'Ejercicio de comprensión lectora';
+    var subtitulo     = data.subtitulo     || '';
+    var instrucciones = data.instrucciones || 'Lee el texto y responde las preguntas.';
+    var rawTexto      = data.texto         || '';
+    var pal           = getCurrentPalette();
+
+    // Texto
+    var textoHTML = '';
+    if (rawTexto) {
+        var parrafos = rawTexto.split(/\\n\\n|\n\n/);
+        textoHTML = parrafos.filter(function(p){ return p.trim(); })
+                            .map(function(p){ return '        <p>' + escapeHTML(p.trim()) + '</p>'; })
+                            .join('\n');
+    }
+
+    // Preguntas
+    var letra = ['A','B','C','D','E'];
+    var preguntasHTML = '';
+    preguntas.forEach(function(q, i) {
+        var opcionesHTML = '';
+        q.opciones.forEach(function(opt, j) {
+            opcionesHTML += '\n            <div class="quiz-option" onclick="seleccionarOpcion(this,' + i + ',' + j + ')">' +
+                '<span class="quiz-option-letter">' + letra[j] + '</span>' +
+                '<span class="quiz-option-text">' + escapeHTML(opt) + '</span></div>';
+        });
+        var typeLabel = TYPE_LABELS[q.tipoPreg] || q.tipoPreg || '';
+        preguntasHTML +=
+            '\n        <details class="quiz-pregunta" id="pregunta-' + i + '">' +
+            '\n            <summary>' +
+                '<span class="preg-num">Pregunta ' + (i+1) + '</span>' +
+                (typeLabel ? '<span class="preg-tipo">' + typeLabel + '</span>' : '') +
+                '<span class="preg-texto">' + escapeHTML(q.pregunta) + '</span>' +
+            '</summary>' +
+            '\n            <div class="details-contenido">' +
+            '\n                <div class="quiz-opciones" id="opciones-' + i + '">' + opcionesHTML + '\n                </div>' +
+            '\n                <div class="quiz-feedback hidden" id="feedback-' + i + '"></div>' +
+            '\n            </div>' +
+            '\n        </details>';
+    });
+
+    var answersArr    = preguntas.map(function(q){ return q.respuestaCorrecta; });
+    var explicaciones = preguntas.map(function(q){ return (q.explicacion||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); });
+
+    var css = '\n        :root {\n' +
+        '            --clr-primary:      ' + pal.primary + ';\n' +
+        '            --clr-secondary:    ' + pal.secondary + ';\n' +
+        '            --clr-light:        ' + pal.light + ';\n' +
+        '            --clr-light-border: ' + pal.lightBorder + ';\n' +
+        '            --clr-accent:       ' + pal.accent + ';\n' +
+        '            --clr-accent-hover: ' + pal.accentHover + ';\n' +
+        '            --clr-accent-dark:  ' + pal.accentDark + ';\n' +
+        '            --clr-shadow:       ' + pal.shadow + ';\n' +
+        '            --clr-shadow-deep:  ' + pal.shadowDeep + ';\n' +
+        '        }\n' +
+        '        @import url(\'https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700;900&display=swap\');\n' +
+        '        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\n' +
+        '        body{font-family:\'Lato\',\'Segoe UI\',Tahoma,Geneva,Verdana,sans-serif;font-size:19px;line-height:1.75;color:#212529;background:#f8f9fa;padding:1.5rem}\n' +
+        '        .quiz-container{max-width:860px;margin:0 auto;background:#fff;border-radius:16px;padding:2rem 2.5rem;box-shadow:0 4px 20px var(--clr-shadow)}\n' +
+        '        .quiz-site-badge{display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,var(--clr-primary),var(--clr-secondary));color:#fff;padding:.3rem 1rem;border-radius:20px;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.75rem}\n' +
+        '        h1{font-size:1.75rem;font-weight:900;color:var(--clr-primary);margin-bottom:.25rem;line-height:1.3}\n' +
+        '        .quiz-subtitulo{color:#6b7280;font-size:1rem;margin-bottom:1.5rem}\n' +
+        '        .quiz-texto-lectura{background:var(--clr-light);border:2px solid var(--clr-primary);border-radius:12px;padding:1.5rem;margin-bottom:2rem;line-height:1.85}\n' +
+        '        .quiz-texto-lectura h2{font-size:1.1rem;font-weight:700;color:var(--clr-primary);margin-bottom:1rem}\n' +
+        '        .quiz-texto-lectura p{margin-bottom:1em;text-align:justify}\n' +
+        '        .quiz-texto-lectura p:last-child{margin-bottom:0}\n' +
+        '        .quiz-instrucciones{background:#fff8e1;border-left:5px solid #f59e0b;padding:.9rem 1.2rem;margin-bottom:2rem;border-radius:0 8px 8px 0;font-style:italic;color:#78350f;font-size:.95rem}\n' +
+        '        details{background:#f8f9fa;border:2px solid var(--clr-primary);border-radius:10px;margin-bottom:1rem;overflow:hidden;transition:box-shadow .25s}\n' +
+        '        details:hover{box-shadow:0 4px 12px var(--clr-shadow-deep)}\n' +
+        '        details[open]{background:#fff}\n' +
+        '        summary{background:var(--clr-primary);color:#fff;padding:.9em 1.4em;cursor:pointer;font-weight:700;font-size:.97em;list-style:none;transition:background-color .25s;user-select:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:.5em}\n' +
+        '        summary::-webkit-details-marker{display:none}\n' +
+        '        summary::before{content:"▶ ";display:inline-block;transition:transform .25s;flex-shrink:0}\n' +
+        '        details[open] summary::before{transform:rotate(90deg)}\n' +
+        '        summary:hover{background:var(--clr-secondary)}\n' +
+        '        .preg-num{font-size:.85em;opacity:.85;white-space:nowrap}\n' +
+        '        .preg-tipo{font-size:.72em;background:rgba(255,255,255,.25);padding:.15em .55em;border-radius:12px;white-space:nowrap;font-weight:600}\n' +
+        '        .preg-texto{font-size:1em;flex:1}\n' +
+        '        .details-contenido{padding:1.25rem 1.5rem}\n' +
+        '        details.respondida-correcta{border-color:#16a34a}\n' +
+        '        details.respondida-correcta summary{background:#16a34a}\n' +
+        '        details.respondida-incorrecta{border-color:#dc2626}\n' +
+        '        details.respondida-incorrecta summary{background:#dc2626}\n' +
+        '        .quiz-opciones{display:flex;flex-direction:column;gap:.6em}\n' +
+        '        .quiz-option{display:flex;align-items:center;gap:.8em;padding:.8em 1em;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all .2s;user-select:none;background:#fff}\n' +
+        '        .quiz-option:hover{border-color:var(--clr-secondary);background:var(--clr-light)}\n' +
+        '        .quiz-option.correcta{border-color:#22c55e;background:#f0fdf4}\n' +
+        '        .quiz-option.incorrecta{border-color:#ef4444;background:#fef2f2}\n' +
+        '        .quiz-option.disabled{pointer-events:none;opacity:.65}\n' +
+        '        .quiz-option.disabled.correcta{opacity:1}\n' +
+        '        .quiz-option-letter{width:32px;height:32px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85em;color:#374151;flex-shrink:0;transition:all .2s}\n' +
+        '        .quiz-option.correcta .quiz-option-letter{background:#22c55e;color:#fff}\n' +
+        '        .quiz-option.incorrecta .quiz-option-letter{background:#ef4444;color:#fff}\n' +
+        '        .quiz-option-text{flex:1;color:#374151;font-size:.97em}\n' +
+        '        .quiz-feedback{margin-top:.8em;padding:.85em 1em;border-radius:8px;font-size:.9em;line-height:1.6}\n' +
+        '        .quiz-feedback.correcto{background:#f0fdf4;border:1px solid #86efac;color:#166534}\n' +
+        '        .quiz-feedback.incorrecto{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}\n' +
+        '        .quiz-score-panel{background:linear-gradient(135deg,var(--clr-primary),var(--clr-secondary));color:#fff;border-radius:14px;padding:2rem 1.5rem;text-align:center;margin-top:2rem;box-shadow:0 8px 24px var(--clr-shadow-deep)}\n' +
+        '        .quiz-score-panel h2{color:#fff;font-size:1.5rem;margin-bottom:.5rem}\n' +
+        '        .quiz-score-number{font-size:3.2rem;font-weight:900;margin:.2em 0;letter-spacing:-.02em}\n' +
+        '        .quiz-score-bar-bg{width:100%;max-width:420px;height:14px;background:rgba(255,255,255,.2);border-radius:7px;margin:1em auto;overflow:hidden}\n' +
+        '        .quiz-score-bar-fill{height:100%;background:var(--clr-accent);border-radius:7px;transition:width .9s cubic-bezier(.4,0,.2,1)}\n' +
+        '        .quiz-score-message{font-size:1.15em;margin-top:.5em;font-weight:600}\n' +
+        '        .quiz-btn-reiniciar{margin-top:1.25em;padding:.8em 2.2em;background:var(--clr-accent);color:var(--clr-accent-dark);border:none;border-radius:8px;font-size:1em;font-weight:800;cursor:pointer;transition:background .2s;display:inline-block}\n' +
+        '        .quiz-btn-reiniciar:hover{background:var(--clr-accent-hover)}\n' +
+        '        .quiz-footer{text-align:center;color:#9ca3af;font-size:.78rem;margin-top:2.5rem;padding-top:1rem;border-top:1px solid #e5e7eb}\n' +
+        '        .quiz-footer a{color:var(--clr-primary);text-decoration:none;font-weight:600}\n' +
+        '        .quiz-footer a:hover{text-decoration:underline}\n' +
+        '        .hidden{display:none!important}\n' +
+        '        @media(max-width:640px){body{padding:.75rem}.quiz-container{padding:1.25rem 1rem;border-radius:10px}h1{font-size:1.35rem}summary{flex-direction:column;gap:.2em}.quiz-score-number{font-size:2.4rem}.quiz-option{padding:.65em .8em}}\n' +
+        '        @media print{body{background:#fff}.quiz-container{box-shadow:none}.quiz-btn-reiniciar{display:none}}\n    ';
+
+    return '<!DOCTYPE html>\n<html lang="es">\n<head>\n' +
+        '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n' +
+        '<title>' + escapeHTML(titulo) + ' — GEDparaHispanos.com</title>\n' +
+        '<style>' + css + '</style>\n</head>\n<body>\n' +
+        '<div class="quiz-container">\n\n' +
+        '<div class="quiz-site-badge">🎓 GEDparaHispanos.com</div>\n\n' +
+        '<h1>📖 ' + escapeHTML(titulo) + '</h1>\n' +
+        (subtitulo ? '<p class="quiz-subtitulo">' + escapeHTML(subtitulo) + '</p>\n' : '') +
+        (textoHTML ? '<div class="quiz-texto-lectura">\n    <h2>📄 Texto de lectura</h2>\n' + textoHTML + '\n</div>\n' : '') +
+        '<div class="quiz-instrucciones">' + escapeHTML(instrucciones) + '</div>\n\n' +
+        '<div id="quizPreguntas">' + preguntasHTML + '\n</div>\n\n' +
+        '<div class="quiz-score-panel hidden" id="scorePanel">\n' +
+        '    <h2>📊 Resultado final</h2>\n' +
+        '    <div class="quiz-score-number" id="scoreNumber">0/' + preguntas.length + '</div>\n' +
+        '    <div class="quiz-score-bar-bg"><div class="quiz-score-bar-fill" id="scoreBar" style="width:0%"></div></div>\n' +
+        '    <div class="quiz-score-message" id="scoreMessage"></div>\n' +
+        '    <div class="quiz-btn-reiniciar" onclick="reiniciarQuiz()">🔄 Reiniciar ejercicio</div>\n' +
+        '</div>\n\n' +
+        '<div class="quiz-footer">Ejercicio generado para <a href="https://GEDparaHispanos.com" target="_blank">GEDparaHispanos.com</a> — Preparación GED en español — Uso libre y gratuito — Impulsado por <a href="https://pollinations.ai" target="_blank">Pollinations AI</a></div>\n\n' +
+        '</div>\n\n<script>\n' +
+        '    var RC=[' + answersArr.join(',') + '];\n' +
+        '    var EX=[' + explicaciones.map(function(e){ return "'" + e + "'"; }).join(',') + '];\n' +
+        '    var TQ=' + preguntas.length + ';\n' +
+        '    var resp=0, corr=0;\n\n' +
+        '    function seleccionarOpcion(el,qi,oi){\n' +
+        '        var p=document.getElementById("pregunta-"+qi);\n' +
+        '        if(p.classList.contains("respondida-correcta")||p.classList.contains("respondida-incorrecta"))return;\n' +
+        '        var ops=document.querySelectorAll("#opciones-"+qi+" .quiz-option");\n' +
+        '        for(var i=0;i<ops.length;i++){ops[i].classList.add("disabled");}\n' +
+        '        var ok=oi===RC[qi];\n' +
+        '        var fb=document.getElementById("feedback-"+qi);\n' +
+        '        if(ok){el.classList.add("correcta");p.classList.add("respondida-correcta");fb.className="quiz-feedback correcto";fb.innerHTML="✅ <strong>¡Correcto!</strong> "+EX[qi];corr++;}\n' +
+        '        else{el.classList.add("incorrecta");p.classList.add("respondida-incorrecta");ops[RC[qi]].classList.add("correcta");fb.className="quiz-feedback incorrecto";fb.innerHTML="❌ <strong>Incorrecto.</strong> "+EX[qi];}\n' +
+        '        fb.classList.remove("hidden");\n' +
+        '        p.setAttribute("open","");\n' +
+        '        resp++;\n' +
+        '        if(resp===TQ)mostrarPuntaje();\n' +
+        '    }\n\n' +
+        '    function mostrarPuntaje(){\n' +
+        '        var pct=Math.round(corr/TQ*100);\n' +
+        '        document.getElementById("scoreNumber").textContent=corr+"/"+TQ+" ("+pct+"%)";\n' +
+        '        document.getElementById("scoreBar").style.width=pct+"%";\n' +
+        '        var msg=pct===100?"🌟 ¡Perfecto! ¡Excelente trabajo!":pct>=80?"👏 ¡Muy bien! Sigue practicando.":pct>=60?"👍 Buen esfuerzo. Repasa los errores.":"📚 Sigue practicando. ¡Tú puedes!";\n' +
+        '        document.getElementById("scoreMessage").textContent=msg;\n' +
+        '        document.getElementById("scorePanel").classList.remove("hidden");\n' +
+        '        document.getElementById("scorePanel").scrollIntoView({behavior:"smooth"});\n' +
+        '    }\n\n' +
+        '    function reiniciarQuiz(){\n' +
+        '        resp=0;corr=0;\n' +
+        '        document.getElementById("scorePanel").classList.add("hidden");\n' +
+        '        for(var i=0;i<TQ;i++){\n' +
+        '            var p=document.getElementById("pregunta-"+i);\n' +
+        '            p.classList.remove("respondida-correcta","respondida-incorrecta");\n' +
+        '            p.removeAttribute("open");\n' +
+        '            var ops=document.querySelectorAll("#opciones-"+i+" .quiz-option");\n' +
+        '            for(var j=0;j<ops.length;j++){ops[j].classList.remove("disabled","correcta","incorrecta");}\n' +
+        '            var fb=document.getElementById("feedback-"+i);\n' +
+        '            fb.className="quiz-feedback hidden";fb.innerHTML="";\n' +
+        '        }\n' +
+        '        window.scrollTo({top:0,behavior:"smooth"});\n' +
+        '    }\n' +
+        '<\/script>\n</body>\n</html>';
+}
+
+// =============================================
+// DISPLAY Y ACCIONES
+// =============================================
+function displayResults() {
+    document.getElementById('codeOutput').textContent = generatedHTML;
+    var iframe = document.getElementById('previewFrame');
+    var blob   = new Blob([generatedHTML], { type: 'text/html' });
+    iframe.src = URL.createObjectURL(blob);
+    document.getElementById('resultsArea').classList.remove('hidden');
+    document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function copiarCodigo() {
+    try {
+        await navigator.clipboard.writeText(generatedHTML);
+    } catch(e) {
+        var ta = document.createElement('textarea');
+        ta.value = generatedHTML;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+    var btn = document.querySelector('.action-btn.secondary');
+    var orig = btn.innerHTML;
+    btn.innerHTML = '✅ ¡Copiado!';
+    setTimeout(function(){ btn.innerHTML = orig; }, 2000);
+}
+
+function buildFilename() {
+    var slug = (lastTitulo || 'ejercicio')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^a-z0-9\s-]/g,'').trim()
+        .replace(/\s+/g,'-').replace(/-+/g,'-')
+        .substring(0,30).replace(/-+$/,'');
+    var abrevMap = { idea_principal:'ip', inferencia:'if', causa_efecto:'ce',
+                     comparar_contrastar:'cc', hechos_opiniones:'ho', secuencia:'sq',
+                     evidencias:'ev', punto_de_vista:'pv', conclusiones:'cn', generalizar:'gn' };
+    var totalOpts = 10;
+    var typeSlug = lastTypes.length===0||lastTypes.length===totalOpts ? 'td'
+                 : lastTypes.length>4 ? 'vr'
+                 : lastTypes.map(function(t){ return abrevMap[t]||t; }).join('-');
+    var hoy = new Date().toISOString().slice(0,10);
+    var palSlug = currentPaleta.substring(0,3);
+    return 'cl-' + slug + '-' + typeSlug + '-' + palSlug + '-' + hoy + '.html';
+}
+
+function descargarHTML() {
+    var blob = new Blob([generatedHTML], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = buildFilename();
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function abrirEnNuevaPestana() {
+    var blob = new Blob([generatedHTML], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+}
+</script>
+</body>
+</html>
