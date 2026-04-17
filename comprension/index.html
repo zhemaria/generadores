@@ -8,7 +8,9 @@
                Harry S. Truman College — City Colleges of Chicago
   Sitio:       https://GEDparaHispanos.com
   Repositorio: https://github.com/zhemaria/generadores/tree/main/comprension
-  Versión:     1.0  (abril 2025)
+  Versión:     2.0  (híbrido — abril 2026)
+               · Modo gratuito anónimo (por defecto, sin registro)
+               · Modo autenticado opcional (API key + selector de modelos)
 
   LICENCIA: Creative Commons Atribución-NoComercial 4.0 Internacional
             CC BY-NC 4.0
@@ -40,7 +42,7 @@
     <title>Generador GEDparaHispanos — Comprensión Lectora</title>
     <meta name="author" content="José M. Fernández (Zhema) — GEDparaHispanos.com">
     <meta name="license" content="CC BY-NC 4.0 — https://creativecommons.org/licenses/by-nc/4.0/">
-    <meta name="description" content="Generador de ejercicios de comprensión lectora para GED en español. 10 tipos de pregunta. Gratuito. Powered by Pollinations AI.">
+    <meta name="description" content="Generador de ejercicios de comprensión lectora para GED en español. 10 tipos de pregunta. Modo gratuito sin registro + modo autenticado opcional con selector de modelos. Powered by Pollinations AI.">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -211,6 +213,126 @@
         .info-note { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.875rem; color: #166534; }
         .info-note strong { color: #14532d; }
 
+        /* ===== SECCIÓN DE MODOS (básico y avanzado) — mismo esquema azul ===== */
+        .modes-wrap {
+            background: #f0f7ff;
+            border: 1px solid #a4c8f0;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .modes-title {
+            font-size: 0.88rem; font-weight: 700; color: #0d3b66;
+            margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.4rem;
+        }
+
+        .mode-block {
+            background: white;
+            border: 1px solid #cde0f5;
+            border-radius: 8px;
+            padding: 0.75rem 0.9rem;
+            margin-bottom: 0.6rem;
+            transition: all 0.2s;
+        }
+        .mode-block:last-child { margin-bottom: 0; }
+        .mode-block.active { border-color: #0d3b66; box-shadow: 0 2px 6px rgba(13,59,102,0.12); }
+
+        .mode-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.35rem 0.8rem; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 700;
+            margin-bottom: 0.4rem;
+            background: #0d3b66; color: white; border: 1px solid #0d3b66;
+        }
+
+        .mode-desc { font-size: 0.83rem; color: #374151; line-height: 1.5; }
+        .mode-desc strong { color: #0d3b66; }
+
+        /* Acordeón avanzado: mismo esquema azul */
+        details.advanced-section {
+            background: white;
+            border: 1px solid #cde0f5;
+            border-radius: 8px;
+            padding: 0.75rem 0.9rem;
+            margin-bottom: 0;
+            transition: all 0.2s;
+        }
+        details.advanced-section[open] { border-color: #0d3b66; box-shadow: 0 2px 6px rgba(13,59,102,0.12); }
+        details.advanced-section summary {
+            cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; list-style: none;
+            user-select: none; padding: 0.15rem 0;
+            flex-wrap: wrap;
+        }
+        details.advanced-section summary::-webkit-details-marker { display: none; }
+        details.advanced-section summary::before {
+            content: '▶';
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+            display: inline-block;
+            color: #1a5490;
+            flex-shrink: 0;
+        }
+        details.advanced-section[open] summary::before { transform: rotate(90deg); }
+
+        /* Píldora principal del summary — siempre azul oscuro, idéntica al mode-badge */
+        .summary-pill {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.35rem 0.8rem; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 700;
+            background: #0d3b66; color: white; border: 1px solid #0d3b66;
+            transition: all 0.2s;
+        }
+        details.advanced-section:hover .summary-pill {
+            background: #1a5490; border-color: #1a5490;
+        }
+
+        .advanced-summary-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.55rem; border-radius: 15px;
+            font-size: 0.72rem; font-weight: 700;
+            background: #e7f3ff; color: #0d3b66; border: 1px solid #a4c8f0;
+        }
+
+        .advanced-content { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #cde0f5; }
+        .advanced-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; }
+        .advanced-row label { font-size: 0.85rem; font-weight: 600; color: #0d3b66; white-space: nowrap; min-width: 90px; }
+        .advanced-row input[type="password"], .advanced-row input[type="text"] {
+            flex: 1; min-width: 200px; padding: 0.55rem 0.85rem;
+            border: 2px solid #cde0f5; border-radius: 7px; font-size: 0.9rem;
+            background: white; font-family: 'Consolas', monospace;
+        }
+        .advanced-row input:focus { outline: none; border-color: #1a5490; }
+        .advanced-row select {
+            flex: 1; min-width: 200px; padding: 0.55rem 0.85rem;
+            border: 2px solid #cde0f5; border-radius: 7px; font-size: 0.9rem;
+            background: white; color: #0d3b66; font-weight: 600; cursor: pointer;
+        }
+        .advanced-row select:focus { outline: none; border-color: #1a5490; }
+        .advanced-btn {
+            padding: 0.55rem 0.9rem; background: #0d3b66; color: white;
+            border: none; border-radius: 7px; font-weight: 600; cursor: pointer;
+            font-size: 0.85rem; white-space: nowrap; transition: background 0.2s;
+        }
+        .advanced-btn:hover { background: #1a5490; }
+        .advanced-btn.danger { background: #b91c1c; }
+        .advanced-btn.danger:hover { background: #991b1b; }
+        .advanced-btn.secondary { background: #6b7280; }
+        .advanced-btn.secondary:hover { background: #4b5563; }
+        .advanced-hint {
+            font-size: 0.78rem; color: #1f2937; margin-top: 0.3rem;
+            padding: 0.5rem 0.7rem; background: #f0f7ff; border-radius: 6px;
+            border-left: 3px solid #1a5490;
+        }
+        .advanced-hint strong { color: #0d3b66; }
+        .advanced-hint a { color: #0d3b66; font-weight: 700; }
+        .model-info {
+            font-size: 0.78rem; color: #065f46; margin-top: 0.2rem;
+            padding: 0.4rem 0.7rem; background: #ecfdf5; border-radius: 6px;
+            border-left: 3px solid #10b981; display: none;
+        }
+        .model-info.visible { display: block; }
+
         .app-footer { text-align: center; color: #6b7280; font-size: 0.85rem; margin-top: 1.5rem; padding-bottom: 1rem; }
         .app-footer a { color: #0d3b66; font-weight: 600; text-decoration: none; }
         .app-footer a:hover { text-decoration: underline; }
@@ -245,113 +367,54 @@
         </div>
 
         <div class="pollinations-badge">
-            🌸 Impulsado por <strong style="margin:0 0.3rem">Pollinations AI</strong> — Generación de texto con IA.
+            🌸 Impulsado por <strong style="margin:0 0.3rem">Pollinations AI</strong>
             &nbsp;<a href="https://pollinations.ai" target="_blank">pollinations.ai →</a>
         </div>
 
-        <!-- CLAVE POLLINATIONS -->
-        <div style="background:#f8faff;border:1px solid #a4c8f0;border-radius:12px;padding:1rem;margin-bottom:1rem;">
-            <div style="font-size:0.9rem;font-weight:700;color:#0d3b66;margin-bottom:0.75rem;">
-                🔑 Clave Pollinations AI <em style="font-weight:400;font-size:0.8rem;color:#6b7280;">(opcional)</em>
-            </div>
+        <!-- ===== SELECTOR DE MODO (básico / avanzado) ===== -->
+        <div class="modes-wrap">
+            <div class="modes-title">⚙️ Modo de funcionamiento — elige cómo usar la IA</div>
 
-            <!-- SELECTOR DE TIPO -->
-            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
-                <div id="keyMode-none" onclick="setKeyMode('none')"
-                    style="flex:1;min-width:120px;padding:0.6rem 0.75rem;border:2px solid #0d3b66;border-radius:9px;background:#0d3b66;color:white;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;">
-                    🆓 Sin clave<br><span style="font-size:0.72rem;font-weight:400;opacity:0.85;">Anónimo · espera 15s</span>
-                </div>
-                <div id="keyMode-pk" onclick="setKeyMode('pk')"
-                    style="flex:1;min-width:120px;padding:0.6rem 0.75rem;border:2px solid #e5e7eb;border-radius:9px;background:#f9fafb;color:#374151;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;">
-                    ✨ Clave gratuita<br><span style="font-size:0.72rem;font-weight:400;">pk_ · registro gratis</span>
-                </div>
-                <div id="keyMode-sk" onclick="setKeyMode('sk')"
-                    style="flex:1;min-width:120px;padding:0.6rem 0.75rem;border:2px solid #e5e7eb;border-radius:9px;background:#f9fafb;color:#374151;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;">
-                    💎 Clave de pago<br><span style="font-size:0.72rem;font-weight:400;">sk_ · Pollen credits</span>
+            <!-- MODO BÁSICO (anónimo) -->
+            <div class="mode-block active" id="modeBlockBasic">
+                <span class="mode-badge" id="modeBadge">🆓 Modo gratuito anónimo (activo)</span>
+                <div class="mode-desc">
+                    <strong>Listo para usar:</strong> sin cuenta, sin clave — solo abre este archivo en el navegador. Modelo único (openai), rate-limit compartido.
                 </div>
             </div>
 
-            <!-- INPUT CLAVE -->
-            <div id="keyInputWrap" style="display:none;">
-                <div style="display:flex;gap:0.5rem;align-items:center;">
-                    <input type="password" id="pollinationsKey" placeholder="pk_xxxxxxxxxxxxxxxx"
-                        style="flex:1;padding:0.5rem 0.9rem;border:2px solid #a4c8f0;border-radius:8px;font-size:0.95rem;font-family:monospace;"
-                        oninput="onKeyInput(this.value)">
-                    <button onclick="togglePolKey()" id="btnTogglePK"
-                        style="padding:0.45rem 0.75rem;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:1rem;">👁️</button>
-                    <button onclick="clearPolKey()"
-                        style="padding:0.45rem 0.75rem;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:1rem;">🗑️</button>
-                </div>
-            </div>
-
-            <!-- ESTADO / HINTS -->
-            <div id="keyHint" style="font-size:0.8rem;color:#6b7280;margin-top:0.6rem;line-height:1.5;">
-                Sin clave: funciona con ~15s de espera entre los dos pasos. &nbsp;
-                <a href="https://auth.pollinations.ai" target="_blank" style="color:#1a5490;font-weight:600;">Registrarse gratis (pk_) →</a>
-                &nbsp;|&nbsp;
-                <a href="https://enter.pollinations.ai" target="_blank" style="color:#1a5490;font-weight:600;">Pollen credits (sk_) →</a>
-            </div>
-
-            <!-- AYUDA DESPLEGABLE -->
-            <details style="margin-top:0.75rem;">
-                <summary style="font-size:0.82rem;font-weight:700;color:#1a5490;cursor:pointer;
-                                padding:0.5rem 0.75rem;background:#e7f3ff;border-radius:8px;
-                                list-style:none;display:flex;align-items:center;gap:0.4rem;
-                                user-select:none;transition:background 0.2s;">
-                    ❓ ¿Qué es una clave API y cómo la obtengo? (haz clic para ver)
+            <!-- MODO AVANZADO (autenticado, colapsado) -->
+            <details class="advanced-section" id="advancedSection">
+                <summary>
+                    <span class="summary-pill" id="summaryPill">🔐 Modo autenticado (opcional)</span>
+                    <span class="advanced-summary-badge">⚙️ API key + selector de modelos</span>
                 </summary>
-                <div style="padding:1rem;background:#f8faff;border:1px solid #cde0f5;
-                            border-radius:0 0 8px 8px;font-size:0.88rem;line-height:1.7;color:#374151;">
+                <div class="advanced-content">
+                    <div class="advanced-hint">
+                        💡 <strong>¿Cuándo conviene?</strong> Para un aula con varios estudiantes generando a la vez (mejor rate-limit, menos timeouts) o para probar modelos específicos (mistral, deepseek, llama, gemini, etc.). La API key es <strong>gratuita</strong>. En modo básico ya funciona — esto es solo un upgrade.
+                    </div>
 
-                    <p style="margin-bottom:0.75rem;">
-                        <strong>¿Qué es una "clave API"?</strong><br>
-                        Piénsala como una <em>contraseña personalizada</em> que le dice al servidor de
-                        Pollinations AI: <em>"soy yo, el usuario registrado, déjame pasar más rápido"</em>.
-                        Sin ella el generador funciona igual, solo un poco más lento.
-                    </p>
+                    <div class="advanced-row" style="margin-top:0.75rem;">
+                        <label for="apiKeyInput">🔑 API key:</label>
+                        <input type="password" id="apiKeyInput" placeholder="plln_sk_... (pégala aquí)" autocomplete="off">
+                        <button class="advanced-btn" onclick="saveApiKey()">💾 Guardar</button>
+                        <button class="advanced-btn secondary" onclick="startAuthFlow()">🔗 Obtener key</button>
+                        <button class="advanced-btn danger" onclick="clearApiKey()" id="clearKeyBtn" style="display:none;">🗑️ Borrar</button>
+                    </div>
 
-                    <p style="margin-bottom:0.5rem;font-weight:700;color:#0d3b66;">
-                        ✨ Opción A — Clave gratuita <code style="background:#e7f3ff;padding:0.1em 0.4em;border-radius:4px;">pk_</code>
-                        (recomendada para la mayoría)
-                    </p>
-                    <ol style="margin:0 0 0.75rem 1.2rem;padding:0;">
-                        <li>Ve a <a href="https://auth.pollinations.ai" target="_blank"
-                            style="color:#1a5490;font-weight:600;">auth.pollinations.ai</a>
-                            en tu navegador.</li>
-                        <li>Haz clic en <strong>"Sign up"</strong> (registrarse) — solo necesitas
-                            un correo electrónico.</li>
-                        <li>Confirma tu correo y entra a tu cuenta.</li>
-                        <li>Busca la sección <strong>"API Keys"</strong> y haz clic en
-                            <strong>"Create key"</strong>.</li>
-                        <li>Copia la clave que empieza con <code style="background:#e7f3ff;padding:0.1em 0.4em;border-radius:4px;">pk_</code>.</li>
-                        <li>Pégala aquí arriba, en el campo de texto, después de seleccionar
-                            <strong>✨ Clave gratuita</strong>.</li>
-                    </ol>
-                    <p style="margin-bottom:0.75rem;background:#f0fdf4;border:1px solid #86efac;
-                               border-radius:6px;padding:0.5rem 0.75rem;">
-                        💡 <strong>La clave gratuita no cuesta nada.</strong>
-                        Solo acelera el generador (de ~15s a ~5s entre pasos) y te quita la espera.
-                    </p>
+                    <div class="advanced-row">
+                        <label for="modelSelector">🤖 Modelo:</label>
+                        <select id="modelSelector" disabled>
+                            <option value="">— Ingresa primero una API key —</option>
+                        </select>
+                        <button class="advanced-btn secondary" onclick="loadTextModels()" id="reloadModelsBtn" style="display:none;">🔄 Recargar</button>
+                    </div>
 
-                    <p style="margin-bottom:0.5rem;font-weight:700;color:#92400e;">
-                        💎 Opción B — Clave de pago <code style="background:#fff7ed;padding:0.1em 0.4em;border-radius:4px;">sk_</code>
-                        (para uso intensivo)
-                    </p>
-                    <ol style="margin:0 0 0.75rem 1.2rem;padding:0;">
-                        <li>Ve a <a href="https://enter.pollinations.ai" target="_blank"
-                            style="color:#92400e;font-weight:600;">enter.pollinations.ai</a>.</li>
-                        <li>Regístrate y compra créditos <strong>"Pollen"</strong>
-                            (aproximadamente $1 = 1 Pollen).</li>
-                        <li>Crea una clave secreta que empieza con
-                            <code style="background:#fff7ed;padding:0.1em 0.4em;border-radius:4px;">sk_</code>.</li>
-                        <li>Pégala aquí después de seleccionar <strong>💎 Clave de pago</strong>.</li>
-                    </ol>
-                    <p style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;
-                               padding:0.5rem 0.75rem;color:#92400e;">
-                        ⚠️ <strong>La clave <code>sk_</code> es secreta.</strong>
-                        Úsala solo en tu computadora personal y no la compartas con nadie.
-                    </p>
+                    <div class="model-info" id="modelInfo"></div>
 
+                    <div class="advanced-hint" style="margin-top:0.5rem;">
+                        ⚠️ <strong>Aviso de seguridad:</strong> la API key se guarda en <code>localStorage</code> del navegador. En computadoras compartidas (aula/biblioteca), usa el botón <strong>Borrar</strong> al terminar.
+                    </div>
                 </div>
             </details>
         </div>
@@ -467,7 +530,7 @@
         <div class="config-row">
             <div class="config-item">
                 <span class="field-label">Número de preguntas</span>
-                <input type="number" id="numPreguntas" min="3" max="8" value="5">
+                <input type="number" id="numPreguntas" min="3" max="10" value="5">
             </div>
             <div class="config-item">
                 <span class="field-label">Opciones por pregunta</span>
@@ -601,7 +664,8 @@
     <div class="app-footer">
         Generador de ejercicios para <a href="https://GEDparaHispanos.com" target="_blank">GEDparaHispanos.com</a>
         — Comprensión Lectora GED — Adult Education — Truman College — Por <strong>Zhema</strong><br>
-        Impulsado por <a href="https://pollinations.ai" target="_blank">Pollinations AI</a> (gratuito)
+        Impulsado por <a href="https://pollinations.ai" target="_blank">Pollinations AI</a>
+        — Modo anónimo gratuito + modo autenticado opcional (v2.0)
         &nbsp;·&nbsp;
         <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.es" target="_blank"
            title="Creative Commons Atribución-NoComercial 4.0 Internacional">© 2025 CC BY-NC 4.0</a>
@@ -623,111 +687,6 @@ var extractedText     = '';   // texto de archivo o URL
 var savedTexto        = '';
 var savedTitulo       = '';
 var savedSubtitulo    = '';
-
-// =============================================
-// CLAVE POLLINATIONS — pk_ (gratis) o sk_ (pago)
-// =============================================
-var currentKeyMode = 'none'; // 'none' | 'pk' | 'sk'
-
-document.addEventListener('DOMContentLoaded', function() {
-    var savedMode = localStorage.getItem('pollinations_key_mode') || 'none';
-    var savedKey  = localStorage.getItem('pollinations_key_val')  || '';
-    if (savedMode !== 'none' && savedKey) {
-        setKeyMode(savedMode, false);
-        document.getElementById('pollinationsKey').value = savedKey;
-        updateKeyHint(savedKey);
-    } else {
-        setKeyMode('none', false);
-    }
-});
-
-function setKeyMode(mode, save) {
-    currentKeyMode = mode;
-    if (save !== false) localStorage.setItem('pollinations_key_mode', mode);
-
-    var ACTIVE = 'border:2px solid #0d3b66;background:#0d3b66;color:white;';
-    var IDLE   = 'border:2px solid #e5e7eb;background:#f9fafb;color:#374151;';
-    document.getElementById('keyMode-none').style.cssText += (mode==='none' ? ACTIVE : IDLE);
-    document.getElementById('keyMode-pk').style.cssText   += (mode==='pk'   ? ACTIVE : IDLE);
-    document.getElementById('keyMode-sk').style.cssText   += (mode==='sk'   ? ACTIVE : IDLE);
-
-    var wrap = document.getElementById('keyInputWrap');
-    var hint = document.getElementById('keyHint');
-    var inp  = document.getElementById('pollinationsKey');
-
-    if (mode === 'none') {
-        wrap.style.display = 'none';
-        hint.style.color   = '#6b7280';
-        hint.innerHTML     = '🆓 Modo anónimo — funciona con ~15s de espera entre los dos pasos. &nbsp;' +
-            '<a href="https://auth.pollinations.ai" target="_blank" style="color:#1a5490;font-weight:600;">Registrarse gratis (pk_) →</a>' +
-            ' &nbsp;|&nbsp; <a href="https://enter.pollinations.ai" target="_blank" style="color:#1a5490;font-weight:600;">Pollen credits (sk_) →</a>';
-    } else if (mode === 'pk') {
-        wrap.style.display = 'block';
-        inp.placeholder    = 'pk_xxxxxxxxxxxxxxxx';
-        hint.style.color   = '#1a5490';
-        hint.innerHTML     = '✨ Clave gratuita <code>pk_</code> — registro gratis en ' +
-            '<a href="https://auth.pollinations.ai" target="_blank" style="color:#1a5490;font-weight:600;">auth.pollinations.ai</a>. ' +
-            'Sin esperas largas (1 req/5s).';
-    } else {
-        wrap.style.display = 'block';
-        inp.placeholder    = 'sk_xxxxxxxxxxxxxxxx';
-        hint.style.color   = '#92400e';
-        hint.innerHTML     = '💎 Clave de pago <code>sk_</code> — usa tus créditos Pollen. ' +
-            'Sin límites de velocidad. Gestiona en ' +
-            '<a href="https://enter.pollinations.ai" target="_blank" style="color:#92400e;font-weight:600;">enter.pollinations.ai</a>.' +
-            ' <strong>Úsala solo en tu dispositivo personal.</strong>';
-    }
-}
-
-function onKeyInput(val) {
-    val = val.trim();
-    if (val) {
-        localStorage.setItem('pollinations_key_val', val);
-        updateKeyHint(val);
-    } else {
-        localStorage.removeItem('pollinations_key_val');
-    }
-}
-
-function updateKeyHint(val) {
-    var hint = document.getElementById('keyHint');
-    if (!val) return;
-    if (val.startsWith('pk_')) {
-        hint.style.color = '#065f46';
-        hint.innerHTML   = '✅ Clave <code>pk_</code> guardada — velocidad mejorada activa (1 req/5s).';
-    } else if (val.startsWith('sk_')) {
-        hint.style.color = '#92400e';
-        hint.innerHTML   = '✅ Clave <code>sk_</code> guardada — créditos Pollen activos. ' +
-            '<strong>No compartas esta clave.</strong>';
-    } else {
-        hint.style.color = '#dc2626';
-        hint.innerHTML   = '⚠️ Formato no reconocido. Las claves deben empezar con <code>pk_</code> (gratis) o <code>sk_</code> (pago).';
-    }
-}
-
-function togglePolKey() {
-    var inp = document.getElementById('pollinationsKey');
-    var btn = document.getElementById('btnTogglePK');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    btn.textContent = inp.type === 'password' ? '👁️' : '🔒';
-}
-
-function clearPolKey() {
-    if (confirm('¿Borrar la clave guardada?')) {
-        localStorage.removeItem('pollinations_key_val');
-        localStorage.removeItem('pollinations_key_mode');
-        document.getElementById('pollinationsKey').value = '';
-        setKeyMode('none');
-    }
-}
-
-function getPolKey() {
-    if (currentKeyMode === 'none') return null;
-    var val = (document.getElementById('pollinationsKey').value || '').trim();
-    if (!val) return null;
-    if (val.startsWith('pk_') || val.startsWith('sk_')) return val;
-    return null;
-}
 
 // =============================================
 // PALETAS
@@ -1094,62 +1053,222 @@ var TYPE_DESCS = {
 };
 
 // =============================================
-// LLAMADA A POLLINATIONS (base)
+// LLAMADA A POLLINATIONS — HÍBRIDO
 // =============================================
-async function callPollinations(systemPrompt, userPrompt, useJson) {
-    var pk    = getPolKey();
-    var url   = pk ? 'https://gen.pollinations.ai/v1/chat/completions'
-                   : 'https://text.pollinations.ai/';
+// Modo anónimo: https://text.pollinations.ai/ (sin key, model 'openai', jsonMode, seed)
+// Modo auth:    https://gen.pollinations.ai/v1/chat/completions (Bearer, modelo dinámico)
+// =============================================
 
-    var body;
-    if (pk) {
-        // OpenAI-compatible endpoint (gen.pollinations.ai)
-        body = {
-            model: 'openai',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user',   content: userPrompt   }
-            ]
-        };
-        if (useJson) body.response_format = { type: 'json_object' };
-    } else {
-        // Legacy endpoint (text.pollinations.ai)
-        body = {
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user',   content: userPrompt   }
-            ],
-            model: 'openai',
-            seed: Math.floor(Math.random() * 99999)
-        };
-        if (useJson) body.jsonMode = true;
+var POLLINATIONS_API_KEY = '';
+var TEXT_MODELS          = [];
+var SELECTED_MODEL       = 'openai';
+
+function setApiKey(key) {
+    POLLINATIONS_API_KEY = (key || '').trim();
+    if (POLLINATIONS_API_KEY) {
+        localStorage.setItem('pollinations_api_key', POLLINATIONS_API_KEY);
     }
+    updateModeUI();
+}
 
+function getApiKey() {
+    return POLLINATIONS_API_KEY;
+}
+
+function hasApiKey() {
+    return POLLINATIONS_API_KEY && POLLINATIONS_API_KEY.length > 0;
+}
+
+function saveApiKey() {
+    var input = document.getElementById('apiKeyInput').value.trim();
+    if (!input) { alert('Pega tu API key primero (formato plln_sk_...).'); return; }
+    setApiKey(input);
+    document.getElementById('apiKeyInput').value = '';
+    loadTextModels();
+    alert('✅ API key guardada. Modo autenticado activo.');
+}
+
+function clearApiKey() {
+    if (!confirm('¿Borrar la API key guardada? Volverás al modo anónimo gratuito.')) return;
+    POLLINATIONS_API_KEY = '';
+    localStorage.removeItem('pollinations_api_key');
+    localStorage.removeItem('pollinations_text_model');
+    SELECTED_MODEL = 'openai';
+    var selector = document.getElementById('modelSelector');
+    selector.innerHTML = '<option value="">— Ingresa primero una API key —</option>';
+    selector.disabled = true;
+    document.getElementById('modelInfo').classList.remove('visible');
+    updateModeUI();
+}
+
+function getApiKeyFromUrl() {
+    // Recuperar key desde el hash de la URL tras el flujo OAuth
+    var hashParams = new URLSearchParams(window.location.hash.slice(1));
+    var apiKey = hashParams.get('api_key');
+    if (apiKey) {
+        setApiKey(apiKey);
+        // Limpiar la URL
+        window.history.replaceState(null, null, window.location.pathname + window.location.search);
+        loadTextModels();
+        return true;
+    }
+    // O recuperar desde localStorage
+    var stored = localStorage.getItem('pollinations_api_key');
+    if (stored) {
+        setApiKey(stored);
+        return true;
+    }
+    return false;
+}
+
+function startAuthFlow() {
+    var redirectUrl = window.location.href.split('#')[0];
+    window.location.href = 'https://enter.pollinations.ai/authorize?redirect_url=' + encodeURIComponent(redirectUrl);
+}
+
+function updateModeUI() {
+    var badge       = document.getElementById('modeBadge');
+    var blockBasic  = document.getElementById('modeBlockBasic');
+    var advSection  = document.getElementById('advancedSection');
+    var summaryPill = document.getElementById('summaryPill');
+    var clearBtn    = document.getElementById('clearKeyBtn');
+    var reloadBtn   = document.getElementById('reloadModelsBtn');
+    if (!badge || !blockBasic || !advSection || !summaryPill) return;
+
+    // Las píldoras SIEMPRE se ven igual (azul oscuro + blanco).
+    // Lo que distingue cuál está activa es el texto y el resaltado del contenedor.
+
+    if (hasApiKey()) {
+        // Modo autenticado activo → resaltar la card del autenticado
+        badge.innerHTML       = '🆓 Modo gratuito anónimo (inactivo)';
+        summaryPill.innerHTML = '🔐 Modo autenticado (activo) — ' + (SELECTED_MODEL || 'openai');
+        blockBasic.classList.remove('active');
+        advSection.classList.add('active');
+        advSection.setAttribute('open', '');  // expandir automáticamente
+
+        if (clearBtn)  clearBtn.style.display  = 'inline-block';
+        if (reloadBtn) reloadBtn.style.display = 'inline-block';
+    } else {
+        // Modo anónimo activo → resaltar la card del anónimo
+        badge.innerHTML       = '🆓 Modo gratuito anónimo (activo)';
+        summaryPill.innerHTML = '🔐 Modo autenticado (opcional)';
+        blockBasic.classList.add('active');
+        advSection.classList.remove('active');
+
+        if (clearBtn)  clearBtn.style.display  = 'none';
+        if (reloadBtn) reloadBtn.style.display = 'none';
+    }
+}
+
+async function loadTextModels() {
+    if (!hasApiKey()) return;
+    var selector = document.getElementById('modelSelector');
+    if (!selector) return;
+    selector.innerHTML = '<option value="">⏳ Cargando modelos disponibles...</option>';
+    selector.disabled = true;
+    try {
+        var resp = await fetch('https://enter.pollinations.ai/api/generate/text/models');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var models = await resp.json();
+        // Filtrar solo modelos de texto (sin audio)
+        TEXT_MODELS = models.filter(function(m) {
+            return !m.input_modalities || m.input_modalities.indexOf('audio') === -1;
+        });
+        var stored = localStorage.getItem('pollinations_text_model') || 'openai';
+        SELECTED_MODEL = stored;
+        var html = '';
+        var foundStored = false;
+        TEXT_MODELS.forEach(function(m) {
+            var aliases = (m.aliases && m.aliases.length > 0) ? ' (' + m.aliases.join(', ') + ')' : '';
+            html += '<option value="' + m.name + '">' + m.name + aliases + '</option>';
+            if (m.name === stored) foundStored = true;
+        });
+        selector.innerHTML = html;
+        selector.disabled = false;
+        if (foundStored) {
+            selector.value = stored;
+        } else {
+            SELECTED_MODEL = selector.value || 'openai';
+            localStorage.setItem('pollinations_text_model', SELECTED_MODEL);
+        }
+        selector.onchange = function() {
+            SELECTED_MODEL = selector.value;
+            localStorage.setItem('pollinations_text_model', SELECTED_MODEL);
+            updateModeUI();
+            var info = document.getElementById('modelInfo');
+            info.textContent = '✅ Modelo activo: ' + SELECTED_MODEL;
+            info.classList.add('visible');
+        };
+        var info = document.getElementById('modelInfo');
+        info.textContent = '✅ ' + TEXT_MODELS.length + ' modelos disponibles. Modelo activo: ' + SELECTED_MODEL;
+        info.classList.add('visible');
+        updateModeUI();
+    } catch(err) {
+        selector.innerHTML = '<option value="openai">openai (fallback — error al cargar lista)</option>';
+        selector.disabled = false;
+        SELECTED_MODEL = 'openai';
+    }
+}
+
+async function callPollinations(systemPrompt, userPrompt, useJson) {
     var MAX_INTENTOS = 3;
-    var ESPERAS = [4000, 8000, 12000]; // ms entre reintentos
+    var ESPERAS = [3000, 6000, 10000]; // ms entre reintentos
 
     for (var intento = 0; intento < MAX_INTENTOS; intento++) {
         try {
-            var headers = { 'Content-Type': 'application/json' };
-            if (pk) headers['Authorization'] = 'Bearer ' + pk;
+            var resp;
 
-            var resp = await fetch(url, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(body),
-                signal: AbortSignal.timeout(60000)
-            });
+            if (hasApiKey()) {
+                // ============= MODO AUTENTICADO =============
+                // Endpoint moderno, formato OpenAI-compatible
+                resp = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + getApiKey()
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user',   content: userPrompt   }
+                        ],
+                        model: SELECTED_MODEL || 'openai',
+                        seed: Math.floor(Math.random() * 99999)
+                    }),
+                    signal: AbortSignal.timeout(60000)
+                });
 
-            if (resp.ok) {
-                var txt = await resp.text();
-                // gen.pollinations.ai returns OpenAI-format JSON — extract content
-                if (pk) {
-                    try {
-                        var parsed = JSON.parse(txt);
-                        return parsed.choices[0].message.content;
-                    } catch(e) { return txt; }
+                if (resp.ok) {
+                    var data = await resp.json();
+                    // Formato OpenAI: choices[0].message.content
+                    if (data.choices && data.choices[0] && data.choices[0].message) {
+                        return data.choices[0].message.content || '';
+                    }
+                    // Por si algún modelo devuelve formato raro
+                    if (typeof data === 'string') return data;
+                    return JSON.stringify(data);
                 }
-                return txt;
+
+            } else {
+                // ============= MODO ANÓNIMO (original) =============
+                var body = {
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user',   content: userPrompt   }
+                    ],
+                    model: 'openai',
+                    seed: Math.floor(Math.random() * 99999)
+                };
+                if (useJson) body.jsonMode = true;
+
+                resp = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    signal: AbortSignal.timeout(60000)
+                });
+
+                if (resp.ok) return await resp.text();
             }
 
             // Errores recuperables: 502, 503, 504, 429
@@ -1158,12 +1277,14 @@ async function callPollinations(systemPrompt, userPrompt, useJson) {
                 var espera = ESPERAS[intento];
                 setBtnStatus('⏳ Servidor ocupado, reintentando en ' + (espera/1000) + 's... (intento ' + (intento+2) + '/' + MAX_INTENTOS + ')');
                 await new Promise(function(r){ setTimeout(r, espera); });
-                body.seed = Math.floor(Math.random() * 99999); // nueva semilla
                 continue;
             }
 
-            var errText = '';
-            try { errText = await resp.text(); } catch(e){}
+            // Error 401/403 en modo autenticado → API key inválida
+            if (hasApiKey() && (resp.status === 401 || resp.status === 403)) {
+                throw new Error('API key inválida o expirada. Borra la clave y vuelve a obtener una nueva.');
+            }
+
             throw new Error('Error HTTP ' + resp.status + ' tras ' + (intento+1) + ' intento(s).');
 
         } catch(err) {
@@ -1177,7 +1298,8 @@ async function callPollinations(systemPrompt, userPrompt, useJson) {
                 }
                 throw new Error('Tiempo de espera agotado tras ' + MAX_INTENTOS + ' intentos. Pollinations puede estar con alta demanda; intenta en unos minutos.');
             }
-            if (err.message.indexOf('Error HTTP') === 0) throw err; // ya formateado
+            if (err.message && err.message.indexOf('Error HTTP') === 0) throw err;
+            if (err.message && err.message.indexOf('API key') === 0) throw err;
             if (intento < MAX_INTENTOS - 1) {
                 var espera = ESPERAS[intento];
                 setBtnStatus('⏳ Error de red, reintentando en ' + (espera/1000) + 's...');
@@ -1188,6 +1310,13 @@ async function callPollinations(systemPrompt, userPrompt, useJson) {
         }
     }
 }
+
+// Inicialización al cargar la página
+getApiKeyFromUrl();
+if (hasApiKey()) {
+    loadTextModels();
+}
+updateModeUI();
 
 function setBtnStatus(msg) {
     var btn = document.getElementById('btnGenerar');
@@ -1324,14 +1453,6 @@ async function generar() {
         savedTexto     = texto;
         savedTitulo    = '';
         savedSubtitulo = '';
-
-        // — PAUSA entre llamadas si es modo anónimo (límite = 1 req/15s) —
-        if (currentKeyMode === 'none') {
-            for (var s = 15; s > 0; s--) {
-                setBtnStatus('⏳ Esperando ' + s + 's (límite anónimo Pollinations)… Paso 2/2 en breve.');
-                await new Promise(function(r){ setTimeout(r, 1000); });
-            }
-        }
 
         // — PASO 2: Generar las preguntas —
         btn.innerHTML = '<span class="spinner"></span> Paso 2/2 — Generando preguntas...';
