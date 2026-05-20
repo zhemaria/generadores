@@ -1,1 +1,1990 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generador de Matemáticas - Brightspace CSV v4.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- MathJax para renderizado de matemáticas -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #0a0f1a;
+        --bg-secondary: #111827;
+        --bg-tertiary: #1f2937;
+        --bg-card: #162032;
+        --text-primary: #f0f4f8;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --accent-primary: #06b6d4;
+        --accent-secondary: #0891b2;
+        --accent-glow: rgba(6, 182, 212, 0.3);
+        --math-gold: #fbbf24;
+        --math-gold-light: #fcd34d;
+        --success-color: #10b981;
+        --success-light: #34d399;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --danger-light: #f87171;
+        --border-color: #334155;
+        --border-glow: rgba(6, 182, 212, 0.2);
+        --gradient-math: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+      }
+
+      body {
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--bg-primary);
+        background-image:
+          radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+          repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(6, 182, 212, 0.02) 100px, rgba(6, 182, 212, 0.02) 101px),
+          repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(6, 182, 212, 0.02) 100px, rgba(6, 182, 212, 0.02) 101px);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Header con identidad matemática */
+      .header {
+        padding: 1.5rem 2rem;
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '∑ ∫ π √ ∞ Δ θ λ';
+        position: absolute;
+        top: 50%;
+        right: 2rem;
+        transform: translateY(-50%);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.5rem;
+        color: rgba(6, 182, 212, 0.15);
+        letter-spacing: 0.5rem;
+        pointer-events: none;
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .logo-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient-math);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+
+      .header-text h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header-text p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .help-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .help-btn:hover {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-content {
+        background: var(--bg-secondary);
+        margin: 3% auto;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 85vh;
+        overflow-y: auto;
+        position: relative;
+        animation: slideDown 0.3s ease;
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(-30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .close-modal,
+      .close-config-modal {
+        position: absolute;
+        right: 1.5rem;
+        top: 1rem;
+        font-size: 2rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.3s ease;
+        line-height: 1;
+      }
+
+      .close-modal:hover,
+      .close-config-modal:hover {
+        color: var(--accent-primary);
+      }
+
+      .header-buttons {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .config-btn {
+        background: #fef3c7 !important;
+        border-color: #fbbf24 !important;
+        color: #78350f !important;
+      }
+
+      .config-btn:hover {
+        background: #fde68a !important;
+      }
+
+      .modal h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .help-section {
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-primary);
+      }
+
+      .help-section h3 {
+        color: var(--accent-primary);
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .help-section p {
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        line-height: 1.7;
+      }
+
+      .help-section strong {
+        color: var(--text-primary);
+      }
+
+      .help-section.math-highlight {
+        border-left-color: var(--math-gold);
+      }
+
+      .help-section.math-highlight h3 {
+        color: var(--math-gold);
+      }
+
+      /* Container principal */
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+        flex: 1;
+      }
+
+      /* Panel de configuración */
+      .config-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .config-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .control-group label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      input[type='text'],
+      input[type='number'],
+      select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .checkbox-group:hover {
+        border-color: var(--accent-primary);
+      }
+
+      .checkbox-group input[type='checkbox'] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent-primary);
+        cursor: pointer;
+      }
+
+      .checkbox-group span {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+      }
+
+      /* PDF Upload */
+      .pdf-upload-area {
+        margin-top: 1.5rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(139, 92, 246, 0.05));
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .pdf-upload-area.drag-over {
+        border-color: var(--accent-primary);
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));
+      }
+
+      .pdf-upload-btn {
+        padding: 0.875rem 2rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        font-family: 'Space Grotesk', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+      }
+
+      .pdf-upload-btn:hover {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      .pdf-info {
+        color: var(--text-muted);
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .pdf-preview {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+
+      .pdf-item {
+        background: var(--bg-tertiary);
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .pdf-remove {
+        background: var(--danger-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: background 0.3s ease;
+      }
+
+      .pdf-remove:hover {
+        background: var(--danger-light);
+      }
+
+      /* Main Content Grid */
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+      }
+
+      /* Chat Container */
+      .chat-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        overflow: hidden;
+      }
+
+      .chat-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.1));
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .chat-header h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .message {
+        display: flex;
+        gap: 1rem;
+        animation: messageSlide 0.3s ease;
+      }
+
+      @keyframes messageSlide {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+      }
+
+      .message-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .message-content {
+        flex: 1;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        position: relative;
+        max-width: 85%;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        line-height: 1.8;
+      }
+
+      .user-message .message-content {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15));
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        margin-left: auto;
+      }
+
+      .ai-message .message-content {
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        border: none;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .message:hover .copy-btn {
+        opacity: 1;
+      }
+
+      /* Chat Input */
+      .chat-input {
+        padding: 1.25rem;
+        border-top: 1px solid var(--border-color);
+        background: rgba(17, 24, 39, 0.5);
+      }
+
+      .input-container {
+        display: flex;
+        gap: 1rem;
+      }
+
+      .input-container textarea {
+        flex: 1;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem;
+        resize: none;
+        min-height: 60px;
+        transition: all 0.3s ease;
+      }
+
+      .input-container textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .send-btn {
+        padding: 1rem 1.5rem;
+        background: var(--gradient-math);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+
+      .send-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+
+      .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Sidebar Actions */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .action-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+      }
+
+      .action-btn {
+        width: 100%;
+        padding: 1rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, var(--math-gold), #f59e0b);
+        color: var(--bg-primary);
+        margin-bottom: 1rem;
+      }
+
+      .download-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+      }
+
+      .download-btn:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+
+      .clear-btn {
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid var(--danger-color);
+      }
+
+      .clear-btn:hover:not(:disabled) {
+        background: var(--danger-color);
+        color: white;
+      }
+
+      .clear-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* Counter */
+      .counter-card {
+        text-align: center;
+        padding: 2rem 1.5rem;
+      }
+
+      .counter-number {
+        font-size: 3.5rem;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+      }
+
+      .counter-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Stats */
+      .stats-card {
+        padding: 1.25rem;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      }
+
+      .stat-row:last-child {
+        border-bottom: none;
+      }
+
+      .stat-label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      .stat-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* Footer */
+      footer {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        font-size: 0.9rem;
+      }
+
+      footer p {
+        line-height: 1.8;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+
+        .sidebar > * {
+          flex: 1;
+          min-width: 200px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .header-content {
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+        }
+
+        .header::before {
+          display: none;
+        }
+
+        .config-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .chat-container {
+          height: 450px;
+        }
+
+        .header-left {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="logo-icon">∑</div>
+          <div class="header-text">
+            <h1>Generador de Matemáticas</h1>
+            <p>Brightspace CSV v4.0 • Especializado en Problemas y Ejercicios</p>
+          </div>
+        </div>
+        <div class="header-buttons">
+          <button id="configBtn" class="help-btn config-btn">
+            <span>⚙️</span>
+            Configurar API
+          </button>
+          <button id="helpBtn" class="help-btn">
+            <span>?</span>
+            Ayuda
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Configuración de API -->
+    <div id="configModal" class="modal">
+      <div class="modal-content">
+        <span class="close-config-modal">&times;</span>
+        <h2>⚙️ Configuración de API de Groq</h2>
+
+        <div class="help-section">
+          <h3>🔑 ¿Por qué necesitas una API key?</h3>
+          <p>
+            Este generador utiliza el modelo Llama 3.3 70B a través de la API gratuita de Groq para crear preguntas. Cada profesor debe usar su propia clave personal, que se obtiene de
+            forma gratuita en menos de un minuto.
+          </p>
+        </div>
+
+        <div class="help-section math-highlight">
+          <h3>📝 Pasos para obtener tu clave gratuita</h3>
+          <ol style="line-height: 2; font-size: 1.05rem">
+            <li>Ve a <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600">console.groq.com/keys</a></li>
+            <li>Regístrate con tu correo o cuenta de Google (no necesitas tarjeta de crédito)</li>
+            <li>Haz clic en <strong>"Create API Key"</strong></li>
+            <li>Copia la clave (empieza con <code>gsk_...</code>)</li>
+            <li>Pégala en el campo de abajo y haz clic en <strong>Guardar</strong></li>
+          </ol>
+        </div>
+
+        <div class="help-section">
+          <h3>🔐 Tu clave en tu navegador</h3>
+          <p>
+            Tu clave se guarda <strong>únicamente en tu navegador</strong> (almacenamiento local). No se envía a ningún servidor externo más que a la API de Groq cuando generas preguntas.
+            Nadie más puede verla.
+          </p>
+        </div>
+
+        <div class="help-section" style="background: #f0f9ff; border-left: 4px solid var(--primary)">
+          <h3>🗝️ Pega tu clave aquí:</h3>
+          <input
+            type="password"
+            id="apiKeyInput"
+            placeholder="gsk_..."
+            style="
+              width: 100%;
+              padding: 0.875rem 1rem;
+              border: 2px solid var(--gray-300);
+              border-radius: 8px;
+              font-family: 'JetBrains Mono', monospace;
+              font-size: 0.95rem;
+              margin-top: 0.5rem;
+              box-sizing: border-box;
+            "
+          />
+          <div style="display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap">
+            <button id="saveApiKeyBtn" class="help-btn" style="background: var(--primary); color: white; border-color: var(--primary)">💾 Guardar clave</button>
+            <button id="clearApiKeyBtn" class="help-btn" style="background: #fef2f2; color: #991b1b; border-color: #fecaca">🗑️ Borrar clave guardada</button>
+            <button id="toggleVisibilityBtn" class="help-btn">👁️ Mostrar/Ocultar</button>
+          </div>
+          <p id="apiKeyStatus" style="margin-top: 1rem; font-weight: 600; font-size: 0.95rem"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Ayuda -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>📐 Guía - Generador de Matemáticas</h2>
+
+        <div class="help-section math-highlight">
+          <h3>🎯 Especialización Matemática</h3>
+          <p>
+            Este generador está
+            <strong>optimizado para matemáticas</strong>
+            : aritmética, álgebra, geometría, estadística, cálculo y más.
+          </p>
+          <p>
+            Los prompts están diseñados para generar problemas que requieren
+            <strong>razonamiento de múltiples pasos</strong>
+            , no simples operaciones.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>📊 Tipos de Contenido Matemático</h3>
+          <p>
+            <strong>• Aritmética:</strong>
+            Operaciones, fracciones, decimales, porcentajes
+          </p>
+          <p>
+            <strong>• Álgebra:</strong>
+            Ecuaciones, expresiones, funciones, sistemas
+          </p>
+          <p>
+            <strong>• Geometría:</strong>
+            Áreas, perímetros, volúmenes, teoremas
+          </p>
+          <p>
+            <strong>• Estadística:</strong>
+            Media, mediana, probabilidad, gráficas
+          </p>
+          <p>
+            <strong>• Cálculo básico:</strong>
+            Límites, derivadas, integrales sencillas
+          </p>
+        </div>
+
+        <div class="help-section math-highlight">
+          <h3>🔢 Notación Matemática</h3>
+          <p>
+            • Las expresiones se muestran
+            <strong>profesionalmente</strong>
+            en pantalla (x², √x, π)
+          </p>
+          <p>
+            • En el CSV se exportan en
+            <strong>Unicode</strong>
+            compatible con Brightspace
+          </p>
+          <p>• Ejemplos: x^2 → x², sqrt(16) → √16, 1/2 → ½, pi → π</p>
+        </div>
+
+        <div class="help-section">
+          <h3>⚙️ Niveles de Dificultad</h3>
+          <p>
+            <strong>• Básico:</strong>
+            GED nivel 1, operaciones fundamentales
+          </p>
+          <p>
+            <strong>• Intermedio:</strong>
+            GED nivel 2, problemas de 2-3 pasos
+          </p>
+          <p>
+            <strong>• Avanzado:</strong>
+            GED nivel 3, aplicaciones complejas
+          </p>
+          <p>
+            <strong>• Experto:</strong>
+            Desafíos matemáticos, múltiples conceptos
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>📝 Enfoques Disponibles</h3>
+          <p>
+            <strong>• Problemas de palabras:</strong>
+            Situaciones reales, contextos prácticos
+          </p>
+          <p>
+            <strong>• Cálculo directo:</strong>
+            Ejercicios de práctica computacional
+          </p>
+          <p>
+            <strong>• Conceptual:</strong>
+            Comprensión de principios matemáticos
+          </p>
+          <p>
+            <strong>• Análisis de datos:</strong>
+            Interpretación de gráficas y tablas
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>💡 Tips para Mejores Resultados</h3>
+          <p>
+            • En el campo de texto, especifica el
+            <strong>tema exacto</strong>
+            (ej: "ecuaciones lineales de primer grado")
+          </p>
+          <p>
+            • Puedes subir
+            <strong>PDFs con contenido</strong>
+            del que quieras extraer problemas
+          </p>
+          <p>
+            • Los
+            <strong>hints</strong>
+            dan pistas pedagógicas sin revelar la respuesta
+          </p>
+          <p>
+            • Usa
+            <strong>"Problemas de palabras"</strong>
+            para contextos realistas del GED
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Panel de Configuración -->
+      <div class="config-panel">
+        <div class="config-title">
+          <span>⚙️</span>
+          Configuración del Cuestionario
+        </div>
+
+        <div class="config-grid">
+          <div class="control-group">
+            <label>Identificador de Preguntas</label>
+            <input type="text" id="questionName" value="MATH" placeholder="Ej: MATH, ALG, GEOM" />
+          </div>
+
+          <div class="control-group">
+            <label>Tipo de Pregunta</label>
+            <select id="questionType">
+              <option value="multiple_choice">Opción múltiple (una correcta)</option>
+              <option value="multiple_answer">Respuesta múltiple (varias correctas)</option>
+              <option value="short_answer">Respuesta corta numérica</option>
+              <option value="true_false">Verdadero/Falso</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Cantidad de Preguntas</label>
+            <input type="number" id="questionCount" value="10" min="1" max="50" />
+          </div>
+
+          <div class="control-group">
+            <label>Área Matemática</label>
+            <select id="mathArea">
+              <option value="aritmetica">Aritmética y Números</option>
+              <option value="algebra">Álgebra</option>
+              <option value="geometria">Geometría</option>
+              <option value="estadistica">Estadística y Probabilidad</option>
+              <option value="funciones">Funciones y Gráficas</option>
+              <option value="mixto" selected>Mixto (Variado)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Enfoque del Problema</label>
+            <select id="questionFocus">
+              <option value="problemas" selected>Problemas de palabras (contexto real)</option>
+              <option value="calculo">Cálculo directo (ejercicios)</option>
+              <option value="conceptual">Conceptual (comprensión)</option>
+              <option value="datos">Análisis de datos (gráficas/tablas)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Nivel de Dificultad</label>
+            <select id="difficultyLevel">
+              <option value="basico">Básico (GED Nivel 1)</option>
+              <option value="intermedio" selected>Intermedio (GED Nivel 2)</option>
+              <option value="avanzado">Avanzado (GED Nivel 3)</option>
+              <option value="experto">Experto (Desafío)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-grid" style="margin-top: 1rem">
+          <div class="checkbox-group">
+            <input type="checkbox" id="includeHints" checked />
+            <span>💡 Incluir hints pedagógicos</span>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="includeSteps" />
+            <span>📝 Mostrar pasos de solución</span>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="realContext" checked />
+            <span>🌍 Contextos de la vida real</span>
+          </div>
+        </div>
+
+        <!-- PDF Upload -->
+        <div class="pdf-upload-area" id="pdfDropZone">
+          <button id="pdfUploadBtn" class="pdf-upload-btn">📄 Cargar PDFs (Opcional)</button>
+          <input type="file" id="pdfInput" accept=".pdf" multiple style="display: none" />
+          <p class="pdf-info">Arrastra PDFs aquí o haz clic • Máximo 5 archivos</p>
+          <div id="pdfPreview" class="pdf-preview"></div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <!-- Chat -->
+        <div class="chat-container">
+          <div class="chat-header">
+            <span style="font-size: 1.5rem">🧮</span>
+            <h2>Generador de Problemas Matemáticos</h2>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input">
+            <div class="input-container">
+              <textarea id="messageInput" placeholder="Describe el tema matemático (ej: ecuaciones cuadráticas, porcentajes, área de círculos...)"></textarea>
+              <button id="sendBtn" class="send-btn">
+                <span>∑</span>
+                Generar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="action-card">
+            <button id="downloadBtn" class="action-btn download-btn" disabled>📥 Descargar CSV</button>
+            <button id="clearBtn" class="action-btn clear-btn" disabled>🗑️ Limpiar Todo</button>
+          </div>
+
+          <div class="action-card counter-card">
+            <div id="counterNumber" class="counter-number">0</div>
+            <div class="counter-label">Problemas Generados</div>
+          </div>
+
+          <div class="action-card stats-card">
+            <div class="stat-row">
+              <span class="stat-label">Sesiones:</span>
+              <span id="totalSessions" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">PDFs cargados:</span>
+              <span id="pdfsLoaded" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Formato:</span>
+              <span class="stat-value">CSV v4.0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Especialidad:</span>
+              <span class="stat-value" style="color: var(--math-gold)">MATH</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        Generador de Matemáticas para Brightspace • Versión 4.0 Especializada
+        <br />
+        Optimizado para GED Mathematics • Unicode y MathJax
+        <br />
+        Creado con Claude Sonnet 4.5 y API de Groq (versión 2 — clave personal)
+        <br />
+        por José M. Fernández (Zhema)
+      </p>
+    </footer>
+
+    <script>
+      // Configuración de PDF.js
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      // Variables globales
+      let generatedQuestions = [];
+      let totalSessions = parseInt(localStorage.getItem('mathSessions') || '0');
+      let loadedPDFs = [];
+
+      document.getElementById('totalSessions').textContent = totalSessions;
+
+      // Conversión matemática a Unicode con manejo de errores
+      function mathToUnicode(text) {
+        if (!text) return text || '';
+
+        try {
+          const superscripts = {
+            0: '⁰',
+            1: '¹',
+            2: '²',
+            3: '³',
+            4: '⁴',
+            5: '⁵',
+            6: '⁶',
+            7: '⁷',
+            8: '⁸',
+            9: '⁹',
+            '+': '⁺',
+            '-': '⁻',
+            '=': '⁼',
+            '(': '⁽',
+            ')': '⁾',
+            n: 'ⁿ',
+            x: 'ˣ'
+          };
+
+          const subscripts = {
+            0: '₀',
+            1: '₁',
+            2: '₂',
+            3: '₃',
+            4: '₄',
+            5: '₅',
+            6: '₆',
+            7: '₇',
+            8: '₈',
+            9: '₉',
+            '+': '₊',
+            '-': '₋',
+            '=': '₌',
+            '(': '₍',
+            ')': '₎'
+          };
+
+          const symbols = {
+            pi: 'π',
+            Pi: 'π',
+            PI: 'π',
+            alpha: 'α',
+            beta: 'β',
+            gamma: 'γ',
+            delta: 'δ',
+            Delta: 'Δ',
+            theta: 'θ',
+            lambda: 'λ',
+            mu: 'μ',
+            sigma: 'σ',
+            Sigma: 'Σ',
+            infinity: '∞',
+            inf: '∞',
+            sqrt: '√',
+            cbrt: '∛',
+            degree: '°',
+            degrees: '°',
+            deg: '°',
+            angle: '∠',
+            perpendicular: '⊥',
+            parallel: '∥',
+            approx: '≈',
+            therefore: '∴',
+            because: '∵'
+          };
+
+          let result = String(text);
+
+          // Exponentes
+          result = result.replace(/\^([0-9+\-=()nxy]+)/g, function (match, exp) {
+            return exp
+              .split('')
+              .map(function (c) {
+                return superscripts[c] || c;
+              })
+              .join('');
+          });
+
+          // Subíndices
+          result = result.replace(/_([0-9+\-=()]+)/g, function (match, sub) {
+            return sub
+              .split('')
+              .map(function (c) {
+                return subscripts[c] || c;
+              })
+              .join('');
+          });
+
+          // Símbolos - usando reemplazo simple en lugar de regex con word boundary
+          Object.keys(symbols).forEach(function (key) {
+            // Reemplazo simple case-insensitive
+            var searchRegex = new RegExp(key, 'gi');
+            result = result.replace(searchRegex, symbols[key]);
+          });
+
+          // Operadores
+          result = result.replace(/<=/g, '≤');
+          result = result.replace(/>=/g, '≥');
+          result = result.replace(/!=/g, '≠');
+          result = result.replace(/\+\-/g, '±');
+
+          // Fracciones comunes
+          var fractions = {
+            '1/2': '½',
+            '1/3': '⅓',
+            '2/3': '⅔',
+            '1/4': '¼',
+            '3/4': '¾',
+            '1/5': '⅕',
+            '2/5': '⅖',
+            '3/5': '⅗',
+            '4/5': '⅘',
+            '1/6': '⅙',
+            '5/6': '⅚',
+            '1/8': '⅛',
+            '3/8': '⅜',
+            '5/8': '⅝',
+            '7/8': '⅞',
+            '1/10': '⅒'
+          };
+
+          Object.keys(fractions).forEach(function (key) {
+            result = result.split(key).join(fractions[key]);
+          });
+
+          return result;
+        } catch (error) {
+          console.error('Error en mathToUnicode:', error);
+          return String(text); // Devolver texto original si hay error
+        }
+      }
+
+      // Envolver matemáticas para MathJax
+      function wrapMathForDisplay(text) {
+        if (!text) return text;
+        let result = text;
+        result = result.replace(/([a-zA-Z0-9]+)\^([0-9+\-=()nxy]+)/g, '$$$1^{$2}$$');
+        result = result.replace(/([a-zA-Z0-9]+)_([0-9+\-=()]+)/g, '$$$1_{$2}$$');
+        result = result.replace(/sqrt\(([^)]+)\)/gi, '$$\\sqrt{$1}$$');
+        result = result.replace(/(\d+)\/(\d+)/g, '$$\\frac{$1}{$2}$$');
+        return result;
+      }
+
+      // Modal
+      const modal = document.getElementById('helpModal');
+      const helpBtn = document.getElementById('helpBtn');
+      const closeModal = document.querySelector('.close-modal');
+
+      helpBtn.onclick = () => (modal.style.display = 'block');
+      closeModal.onclick = () => (modal.style.display = 'none');
+      window.onclick = e => {
+        if (e.target == modal) modal.style.display = 'none';
+      };
+
+      // Modal de Configuración API
+      const configModal = document.getElementById('configModal');
+      const configBtn = document.getElementById('configBtn');
+      const closeConfigModal = document.querySelector('.close-config-modal');
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+      const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+      const toggleVisibilityBtn = document.getElementById('toggleVisibilityBtn');
+      const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+      function updateApiKeyStatus() {
+        const savedKey = localStorage.getItem('groq_api_key_zhema');
+        if (savedKey && savedKey.startsWith('gsk_')) {
+          const masked = savedKey.substring(0, 7) + '...' + savedKey.substring(savedKey.length - 4);
+          apiKeyStatus.textContent = '✅ Clave guardada: ' + masked;
+          apiKeyStatus.style.color = '#065f46';
+          apiKeyInput.value = savedKey;
+        } else {
+          apiKeyStatus.textContent = '⚠️ No hay clave guardada. Configura tu clave para comenzar.';
+          apiKeyStatus.style.color = '#991b1b';
+          apiKeyInput.value = '';
+        }
+      }
+
+      configBtn.onclick = () => {
+        configModal.style.display = 'block';
+        updateApiKeyStatus();
+      };
+      closeConfigModal.onclick = () => (configModal.style.display = 'none');
+
+      saveApiKeyBtn.onclick = () => {
+        const key = apiKeyInput.value.trim();
+        if (!key) {
+          apiKeyStatus.textContent = '❌ El campo está vacío. Pega tu clave primero.';
+          apiKeyStatus.style.color = '#991b1b';
+          return;
+        }
+        if (!key.startsWith('gsk_')) {
+          apiKeyStatus.textContent = "❌ La clave debe empezar con 'gsk_'. Verifica que la copiaste completa.";
+          apiKeyStatus.style.color = '#991b1b';
+          return;
+        }
+        localStorage.setItem('groq_api_key_zhema', key);
+        apiKeyStatus.textContent = '✅ Clave guardada correctamente. Ya puedes generar preguntas.';
+        apiKeyStatus.style.color = '#065f46';
+      };
+
+      clearApiKeyBtn.onclick = () => {
+        if (confirm('¿Seguro que deseas borrar la clave guardada? Tendrás que pegarla de nuevo para usar el generador.')) {
+          localStorage.removeItem('groq_api_key_zhema');
+          updateApiKeyStatus();
+        }
+      };
+
+      toggleVisibilityBtn.onclick = () => {
+        apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+      };
+
+      const previousWindowOnclick = window.onclick;
+      window.onclick = e => {
+        if (e.target == modal) modal.style.display = 'none';
+        if (e.target == configModal) configModal.style.display = 'none';
+      };
+
+      // Abrir automáticamente el modal de configuración si no hay clave guardada
+      if (!localStorage.getItem('groq_api_key_zhema')) {
+        setTimeout(() => {
+          configModal.style.display = 'block';
+          updateApiKeyStatus();
+        }, 500);
+      }
+
+      // PDF handling
+      const pdfDropZone = document.getElementById('pdfDropZone');
+      const pdfInput = document.getElementById('pdfInput');
+      const pdfUploadBtn = document.getElementById('pdfUploadBtn');
+      const pdfPreview = document.getElementById('pdfPreview');
+
+      pdfUploadBtn.addEventListener('click', () => pdfInput.click());
+      pdfInput.addEventListener('change', async e => {
+        await handlePDFFiles(Array.from(e.target.files));
+      });
+
+      pdfDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        pdfDropZone.classList.add('drag-over');
+      });
+
+      pdfDropZone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('drag-over');
+      });
+
+      pdfDropZone.addEventListener('drop', async e => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('drag-over');
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+        await handlePDFFiles(files);
+      });
+
+      async function handlePDFFiles(files) {
+        if (loadedPDFs.length + files.length > 5) {
+          alert('Máximo 5 PDFs permitidos');
+          return;
+        }
+
+        for (const file of files) {
+          try {
+            const text = await extractTextFromPDF(file);
+            loadedPDFs.push({name: file.name, text: text});
+          } catch (error) {
+            console.error('Error procesando PDF:', error);
+            alert('Error al procesar ' + file.name);
+          }
+        }
+
+        updatePDFPreview();
+        document.getElementById('pdfsLoaded').textContent = loadedPDFs.length;
+      }
+
+      async function extractTextFromPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        let fullText = '';
+        const maxPages = Math.min(pdf.numPages, 10);
+
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+
+        return fullText.slice(0, 5000);
+      }
+
+      function updatePDFPreview() {
+        pdfPreview.innerHTML = '';
+        loadedPDFs.forEach((pdf, index) => {
+          const item = document.createElement('div');
+          item.className = 'pdf-item';
+          item.innerHTML =
+            '📄 <span style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + pdf.name + '</span>' + '<button class="pdf-remove" data-index="' + index + '">✕</button>';
+          pdfPreview.appendChild(item);
+        });
+
+        document.querySelectorAll('.pdf-remove').forEach(btn => {
+          btn.addEventListener('click', e => {
+            loadedPDFs.splice(parseInt(e.target.dataset.index), 1);
+            updatePDFPreview();
+            document.getElementById('pdfsLoaded').textContent = loadedPDFs.length;
+          });
+        });
+      }
+
+      // Parse questions
+      function parseGeneratedQuestions(aiResponse, questionType) {
+        const questions = [];
+        const lines = aiResponse.split('\n').filter(line => line.trim());
+        let currentQuestion = null;
+        let questionNumber = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+
+          if (/^\d+\./.test(line) || /^(blank|match)\s+\d+\./i.test(line)) {
+            if (currentQuestion) questions.push(currentQuestion);
+            questionNumber++;
+
+            const questionName = document.getElementById('questionName').value || 'MATH';
+            let questionText = line.replace(/^(blank|match)?\s*\d+\.\s*/i, '').trim();
+
+            currentQuestion = {
+              id: questionName + '_' + questionNumber,
+              text: questionText,
+              type: questionType,
+              options: [],
+              hint: null
+            };
+          } else if (line.toLowerCase().startsWith('hint:') && currentQuestion) {
+            currentQuestion.hint = line.substring(5).trim();
+          } else if (currentQuestion) {
+            if (questionType === 'multiple_choice' || questionType === 'multiple_answer') {
+              if (/^\*?[a-d][\).]/.test(line.toLowerCase())) {
+                const isCorrect = line.trim().startsWith('*');
+                const optionText = line.replace(/^\*?\s*[a-d][\).]\s*/i, '').trim();
+                currentQuestion.options.push({text: optionText, correct: isCorrect});
+              }
+            } else if (questionType === 'true_false') {
+              const match = line.match(/\((VERDADERO|FALSO)\)/i);
+              if (match) currentQuestion.correctAnswer = match[1].toUpperCase() === 'VERDADERO';
+            } else if (questionType === 'short_answer') {
+              if (!line.toLowerCase().startsWith('hint:')) {
+                currentQuestion.correctAnswer = line.trim();
+              }
+            }
+          }
+        }
+
+        if (currentQuestion) questions.push(currentQuestion);
+
+        // Validar opciones
+        questions.forEach(q => {
+          if (q.type === 'multiple_choice' || q.type === 'multiple_answer') {
+            if (q.type === 'multiple_choice') {
+              const hasCorrect = q.options.some(opt => opt.correct);
+              if (!hasCorrect && q.options.length > 0) q.options[0].correct = true;
+            }
+            while (q.options.length < 4) {
+              q.options.push({text: 'Opción ' + (q.options.length + 1), correct: false});
+            }
+            if (q.options.length > 4) q.options = q.options.slice(0, 4);
+          }
+        });
+
+        return questions;
+      }
+
+      // Generate CSV
+      function generateCSV() {
+        let csv = '';
+
+        function escapeCSV(text) {
+          if (text === null || text === undefined) return '""';
+          try {
+            let cleaned = String(text).replace(/\\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ').trim();
+            cleaned = cleaned.replace(/"/g, '""');
+            return '"' + cleaned + '"';
+          } catch (e) {
+            console.error('Error en escapeCSV:', e);
+            return '""';
+          }
+        }
+
+        function safeConvert(text) {
+          try {
+            return mathToUnicode(text);
+          } catch (e) {
+            console.error('Error en safeConvert:', e);
+            return String(text || '');
+          }
+        }
+
+        generatedQuestions.forEach(function (question, index) {
+          try {
+            let qType = 'MC';
+            if (question.type === 'multiple_answer') qType = 'MS';
+            else if (question.type === 'true_false') qType = 'TF';
+            else if (question.type === 'short_answer') qType = 'SA';
+
+            const questionTextCSV = escapeCSV(safeConvert(question.text));
+
+            csv += 'NewQuestion,' + qType + ',,,\n';
+            csv += 'ID,' + escapeCSV(question.id) + ',,,\n';
+            csv += 'Title,' + escapeCSV(question.id) + ',,,\n';
+            csv += 'QuestionText,' + questionTextCSV + ',,,\n';
+            csv += 'Points,1,,,\n';
+            csv += 'Difficulty,1,,,\n';
+
+            if (question.hint) {
+              csv += 'Hint,' + escapeCSV(safeConvert(question.hint)) + ',,,\n';
+            }
+
+            if (question.type === 'multiple_choice' || question.type === 'multiple_answer') {
+              (question.options || []).forEach(function (option) {
+                const points = option.correct ? '100' : '0';
+                csv += 'Option,' + points + ',' + escapeCSV(safeConvert(option.text)) + ',,\n';
+              });
+            } else if (question.type === 'true_false') {
+              const correctValue = question.correctAnswer ? 'TRUE' : 'FALSE';
+              const incorrectValue = question.correctAnswer ? 'FALSE' : 'TRUE';
+              csv += correctValue + ',100,,,\n';
+              csv += incorrectValue + ',0,,,\n';
+            } else if (question.type === 'short_answer') {
+              csv += 'Answer,100,' + escapeCSV(safeConvert(question.correctAnswer)) + ',,\n';
+            }
+
+            csv += 'Feedback,,,,\n';
+            csv += ',,,,\n';
+          } catch (questionError) {
+            console.error('Error procesando pregunta ' + index + ':', questionError);
+          }
+        });
+
+        return csv;
+      }
+
+      function downloadCSV() {
+        try {
+          const csv = generateCSV();
+          if (!csv || csv.trim() === '') {
+            alert('No hay preguntas para descargar.');
+            return;
+          }
+          const BOM = '\uFEFF';
+          const blob = new Blob([BOM + csv], {type: 'text/csv;charset=utf-8;'});
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const now = new Date();
+          const timestamp = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + '_' + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2);
+
+          link.href = url;
+          link.download = 'math_quiz_v4_' + timestamp + '.csv';
+          link.style.visibility = 'hidden';
+          link.style.position = 'absolute';
+          document.body.appendChild(link);
+          link.click();
+
+          // Limpiar después de un pequeño delay
+          setTimeout(function () {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 100);
+        } catch (error) {
+          console.error('Error al descargar CSV:', error);
+          alert('Error al generar el archivo: ' + error.message);
+        }
+      }
+
+      function clearAll() {
+        if (confirm('¿Limpiar todo?')) {
+          generatedQuestions = [];
+          loadedPDFs = [];
+          document.getElementById('chatMessages').innerHTML = '';
+          document.getElementById('counterNumber').textContent = '0';
+          document.getElementById('pdfsLoaded').textContent = '0';
+          updatePDFPreview();
+          document.getElementById('downloadBtn').disabled = true;
+          document.getElementById('clearBtn').disabled = true;
+        }
+      }
+
+      function copyMessage(button) {
+        const messageDiv = button.closest('.message');
+        const originalText = messageDiv.getAttribute('data-original-text');
+        navigator.clipboard.writeText(originalText).then(() => {
+          button.textContent = '✓';
+          setTimeout(() => {
+            button.textContent = 'Copiar';
+          }, 2000);
+        });
+      }
+
+      // Event Listeners
+      const sendBtn = document.getElementById('sendBtn');
+      const input = document.getElementById('messageInput');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const clearBtn = document.getElementById('clearBtn');
+
+      downloadBtn.addEventListener('click', downloadCSV);
+      clearBtn.addEventListener('click', clearAll);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      sendBtn.addEventListener('click', sendMessage);
+
+      async function sendMessage() {
+        const message = input.value.trim();
+        const questionType = document.getElementById('questionType').value;
+        const questionCount = parseInt(document.getElementById('questionCount').value) || 10;
+        const mathArea = document.getElementById('mathArea').value;
+        const questionFocus = document.getElementById('questionFocus').value;
+        const difficultyLevel = document.getElementById('difficultyLevel').value;
+        const includeHints = document.getElementById('includeHints').checked;
+        const includeSteps = document.getElementById('includeSteps').checked;
+        const realContext = document.getElementById('realContext').checked;
+
+        if (questionCount < 1 || questionCount > 50) {
+          alert('Ingresa entre 1 y 50 preguntas.');
+          return;
+        }
+
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span>⏳</span> Generando...';
+
+        totalSessions++;
+        localStorage.setItem('mathSessions', totalSessions);
+        document.getElementById('totalSessions').textContent = totalSessions;
+
+        let sourceContent = '';
+        let fullMessage = '';
+
+        if (loadedPDFs.length > 0) {
+          sourceContent = loadedPDFs.map(pdf => pdf.text).join('\n\n');
+          const fileNames = loadedPDFs.map(pdf => '"' + pdf.name + '"').join(', ');
+          fullMessage = message
+            ? 'Basándote en los PDFs (' + fileNames + '), crea ' + questionCount + ' problemas de matemáticas. Tema adicional: ' + message
+            : 'Basándote en los PDFs (' + fileNames + '), crea ' + questionCount + ' problemas de matemáticas.';
+        } else {
+          if (!message) {
+            alert('Escribe un tema matemático o sube un PDF.');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<span>∑</span> Generar';
+            return;
+          }
+          sourceContent = message;
+          fullMessage = 'Crea ' + questionCount + ' problemas de matemáticas sobre: ' + message;
+        }
+
+        addMessage(fullMessage, 'user');
+        input.value = '';
+
+        try {
+          const aiResponse = await generateMathResponse(questionType, questionCount, sourceContent, mathArea, questionFocus, difficultyLevel, includeHints, includeSteps, realContext);
+
+          addMessage(aiResponse, 'ai');
+
+          let processedResponse = aiResponse
+            .replace(/\\n\*/g, '\n*')
+            .replace(/\\n([a-d][\).])/gi, '\n$1')
+            .replace(/\\n/g, '\n');
+
+          const questions = parseGeneratedQuestions(processedResponse, questionType);
+          generatedQuestions.push(...questions);
+
+          document.getElementById('counterNumber').textContent = generatedQuestions.length;
+          downloadBtn.disabled = false;
+          clearBtn.disabled = false;
+        } catch (error) {
+          addMessage('❌ Error al generar. Inténtalo de nuevo.', 'ai');
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<span>∑</span> Generar';
+        }
+      }
+
+      function addMessage(message, sender) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ' + sender + '-message';
+        messageDiv.setAttribute('data-original-text', message);
+
+        const displayMessage = wrapMathForDisplay(message);
+
+        if (sender === 'user') {
+          messageDiv.innerHTML =
+            '<div class="message-avatar">👤</div>' + '<div class="message-content">' + displayMessage + '<button onclick="copyMessage(this)" class="copy-btn">Copiar</button></div>';
+        } else {
+          messageDiv.innerHTML =
+            '<div class="message-avatar">🧮</div>' + '<div class="message-content">' + displayMessage + '<button onclick="copyMessage(this)" class="copy-btn">Copiar</button></div>';
+        }
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        if (typeof MathJax !== 'undefined') {
+          MathJax.typesetPromise([messageDiv]).catch(err => console.log('MathJax error:', err));
+        }
+      }
+
+      function getGroqApiKey() {
+        return localStorage.getItem('groq_api_key_zhema') || '';
+      }
+
+      async function generateMathResponse(questionType, questionCount, sourceContent, mathArea, questionFocus, difficultyLevel, includeHints, includeSteps, realContext) {
+        const GROQ_API_KEY = getGroqApiKey();
+
+        if (!GROQ_API_KEY) {
+          return '🔑 **No has configurado tu clave de API de Groq.**\n\nHaz clic en el botón **⚙️ Configurar API** en la parte superior derecha para añadir tu clave gratuita. Se obtiene en menos de un minuto en console.groq.com/keys';
+        }
+
+        const mathAreaDescriptions = {
+          aritmetica: 'aritmética: operaciones con enteros, fracciones, decimales, porcentajes, proporciones, razones',
+          algebra: 'álgebra: ecuaciones lineales, cuadráticas, expresiones algebraicas, sistemas de ecuaciones, desigualdades',
+          geometria: 'geometría: áreas, perímetros, volúmenes, teorema de Pitágoras, ángulos, figuras geométricas, coordenadas',
+          estadistica: 'estadística y probabilidad: media, mediana, moda, rango, probabilidad simple, interpretación de datos',
+          funciones: 'funciones y gráficas: funciones lineales, cuadráticas, pendiente, interceptos, interpretación de gráficas',
+          mixto: 'contenido matemático variado apropiado para GED'
+        };
+
+        const focusDescriptions = {
+          problemas:
+            'PROBLEMAS DE PALABRAS con contextos de la vida real. Cada problema debe presentar una situación práctica que requiera identificar la operación correcta, establecer ecuaciones y resolver paso a paso.',
+          calculo:
+            "EJERCICIOS DE CÁLCULO DIRECTO SIN CONTEXTO NARRATIVO. Presenta SOLO expresiones matemáticas puras para resolver. Ejemplos correctos: 'Resuelve: 2x + 5 = 17', 'Simplifica: (3/4) × (2/5)', 'Calcula: √144'. NO incluyas historias, situaciones ni contextos - SOLO matemáticas puras.",
+          conceptual: 'PREGUNTAS CONCEPTUALES que evalúen la comprensión de principios matemáticos, propiedades, definiciones y relaciones entre conceptos sin requerir cálculos extensos.',
+          datos: 'PROBLEMAS DE ANÁLISIS DE DATOS que requieran interpretar tablas, gráficas, diagramas y extraer conclusiones matemáticas basadas en la información presentada.'
+        };
+
+        const levelDescriptions = {
+          basico: 'NIVEL BÁSICO (GED Nivel 1): contenido de un solo paso, números pequeños y enteros, operaciones básicas',
+          intermedio: 'NIVEL INTERMEDIO (GED Nivel 2): contenido de 2-3 pasos, fracciones y decimales, ecuaciones simples',
+          avanzado: 'NIVEL AVANZADO (GED Nivel 3): contenido multi-paso complejo, álgebra intermedia, geometría aplicada',
+          experto: 'NIVEL EXPERTO: contenido desafiante que combina múltiples conceptos, requiere razonamiento avanzado'
+        };
+
+        const questionTypeInstructions = {
+          multiple_choice: {
+            format: '1. [Pregunta o ejercicio matemático]\\n*a) Respuesta CORRECTA (con asterisco)\\nb) Distractor basado en error común\\nc) Distractor plausible\\nd) Distractor plausible',
+            rules: 'CRÍTICO: EXACTAMENTE 4 opciones (a,b,c,d). SOLO UNA correcta con asterisco (*) ANTES de la letra. Los distractores deben basarse en errores comunes de cálculo.'
+          },
+          multiple_answer: {
+            format: '1. [Pregunta que puede tener múltiples respuestas correctas]\\n*a) Correcta\\nb) Incorrecta\\n*c) Correcta\\nd) Incorrecta',
+            rules: 'EXACTAMENTE 4 opciones. 2-3 correctas marcadas con asterisco (*). Mínimo 1 incorrecta.'
+          },
+          short_answer: {
+            format: 'blank 1. [Ejercicio matemático]\\n[Respuesta numérica exacta]',
+            rules: "Cada ejercicio empieza con 'blank X.' La respuesta debe ser un número o expresión exacta en la línea siguiente."
+          },
+          true_false: {
+            format: '1. [Afirmación matemática] (VERDADERO)\\n2. [Afirmación matemática] (FALSO)',
+            rules: 'Cada afirmación termina con (VERDADERO) o (FALSO). Mezcla afirmaciones verdaderas y falsas.'
+          }
+        };
+
+        const typeInstructions = questionTypeInstructions[questionType];
+
+        // Determinar si es ejercicio o problema según el enfoque
+        const esEjercicio = questionFocus === 'calculo';
+        const tipoContenido = esEjercicio ? 'ejercicios' : 'problemas';
+
+        // Solo añadir contextos si es problema de palabras Y está activada la opción
+        const contextInstruction = realContext && questionFocus === 'problemas' ? 'USA CONTEXTOS REALISTAS: compras, cocina, construcción, finanzas personales, viajes, deportes, trabajo.' : '';
+
+        const stepsInstruction = includeSteps ? 'Después de las opciones, añade: Solución: [pasos breves para resolver]' : '';
+
+        const hintInstruction = includeHints ? 'Después de cada pregunta añade: Hint: [pista que guíe sin revelar la respuesta]' : '';
+
+        // Instrucciones específicas según el enfoque
+        const focusSpecificInstructions = {
+          problemas:
+            '- Cada problema debe presentar una SITUACIÓN REAL que requiera razonamiento\n' +
+            '- Los distractores deben basarse en ERRORES COMUNES de interpretación\n' +
+            '- Usa VARIEDAD en los contextos (compras, trabajo, medidas, tiempo, dinero)\n' +
+            '- Los números deben ser REALISTAS para la situación descrita\n',
+          calculo:
+            '- Presenta EXPRESIONES MATEMÁTICAS DIRECTAS para resolver (sin contexto narrativo)\n' +
+            "- Ejemplos: 'Resuelve: 3x + 7 = 22', 'Simplifica: 2/3 + 5/6', 'Calcula: 15% de 240'\n" +
+            '- NO uses historias ni situaciones, solo operaciones matemáticas puras\n' +
+            '- Los distractores deben ser resultados de ERRORES DE CÁLCULO comunes\n' +
+            '- Varía las operaciones: sumas, restas, multiplicaciones, divisiones, ecuaciones\n',
+          conceptual:
+            '- Pregunta sobre PROPIEDADES y DEFINICIONES matemáticas\n' +
+            "- Ejemplos: '¿Qué propiedad se aplica en...?', '¿Cuál es verdadero sobre...?'\n" +
+            '- Evalúa COMPRENSIÓN de conceptos, no solo cálculo\n' +
+            '- Los distractores deben ser conceptos erróneos comunes\n',
+          datos:
+            '- Describe una tabla o gráfica y pregunta sobre ella\n' +
+            '- Pide interpretar tendencias, calcular promedios, comparar datos\n' +
+            '- Los distractores deben ser interpretaciones incorrectas comunes\n'
+        };
+
+        const systemPrompt = esEjercicio
+          ? 'Eres un experto profesor de matemáticas para adultos que estudian el GED en español. Generas EJERCICIOS DE CÁLCULO DIRECTO - expresiones y ecuaciones matemáticas SIN contexto narrativo ni historias. ' +
+            'Usas notación matemática estándar: x^2 para exponentes, sqrt(x) para raíces, pi para π. ' +
+            'SIEMPRE sigues el formato exacto solicitado. Para opción múltiple, SIEMPRE generas EXACTAMENTE 4 opciones con el asterisco ANTES de la letra correcta.'
+          : 'Eres un experto profesor de matemáticas para adultos que estudian el GED en español. Generas contenido matemático claro, bien estructurado y pedagógicamente válido. ' +
+            'Usas notación matemática estándar: x^2 para exponentes, sqrt(x) para raíces, pi para π. ' +
+            'SIEMPRE sigues el formato exacto solicitado. Para opción múltiple, SIEMPRE generas EXACTAMENTE 4 opciones con el asterisco ANTES de la letra correcta.';
+
+        const userPrompt =
+          'Genera EXACTAMENTE ' +
+          questionCount +
+          ' ' +
+          tipoContenido +
+          ' de matemáticas.\n\n' +
+          '⚠️ TEMA ESPECÍFICO OBLIGATORIO (TODAS las preguntas deben ser EXCLUSIVAMENTE sobre este tema):\n' +
+          sourceContent.substring(0, 2500) +
+          '\n\n' +
+          "IMPORTANTE: NO mezcles otros temas. Si el tema dice 'radicales', TODAS las " +
+          questionCount +
+          " preguntas deben ser de radicales. Si dice 'fracciones', TODAS deben ser de fracciones.\n\n" +
+          'ÁREA GENERAL: ' +
+          mathAreaDescriptions[mathArea] +
+          '\n' +
+          'TIPO: ' +
+          focusDescriptions[questionFocus] +
+          '\n' +
+          'DIFICULTAD: ' +
+          levelDescriptions[difficultyLevel] +
+          '\n\n' +
+          contextInstruction +
+          '\n\n' +
+          'FORMATO OBLIGATORIO:\n' +
+          typeInstructions.format +
+          '\n\n' +
+          hintInstruction +
+          '\n' +
+          stepsInstruction +
+          '\n\n' +
+          'REGLAS CRÍTICAS:\n' +
+          typeInstructions.rules +
+          '\n\n' +
+          'INSTRUCCIONES ESPECÍFICAS PARA ESTE TIPO:\n' +
+          focusSpecificInstructions[questionFocus] +
+          '- USA notación matemática: x^2, sqrt(), fracciones como 3/4, √ para raíces\n' +
+          '- VERIFICA que cada pregunta tenga todas sus opciones completas\n' +
+          '- RECUERDA: TODAS las preguntas deben ser del MISMO tema especificado arriba\n\n' +
+          'Responde ÚNICAMENTE con los ' +
+          tipoContenido +
+          ' en el formato exacto. Sin introducción ni conclusión.';
+
+        try {
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              Authorization: 'Bearer ' + GROQ_API_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [
+                {role: 'system', content: systemPrompt},
+                {role: 'user', content: userPrompt}
+              ],
+              temperature: 0.7,
+              max_tokens: 3000
+            })
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error('Groq API error: ' + (error.error?.message || response.statusText));
+          }
+
+          const data = await response.json();
+          let aiResponse = data.choices[0].message.content;
+
+          aiResponse = aiResponse
+            .replace(/^(Claro|Por supuesto|Aquí tienes|Perfecto|Vale).*?\n+/i, '')
+            .replace(/```[a-z]*\n?/g, '')
+            .trim();
+
+          return aiResponse;
+        } catch (error) {
+          console.error('Error con Groq:', error);
+          return '❌ Error: ' + error.message;
+        }
+      }
+    </script>
+  </body>
+</html>
 
