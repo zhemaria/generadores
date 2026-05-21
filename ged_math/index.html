@@ -1,1 +1,2297 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generador de cuestionarios HTML de matemáticas — GEDparaHispanos</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- MathJax para vista previa -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [
+            ['$', '$'],
+            ['\\(', '\\)']
+          ],
+          displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
+          ],
+          processEscapes: true
+        },
+        options: {skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']}
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #0a0f1a;
+        --bg-secondary: #111827;
+        --bg-tertiary: #1f2937;
+        --bg-card: #162032;
+        --text-primary: #f0f4f8;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --accent-primary: #06b6d4;
+        --accent-secondary: #0891b2;
+        --accent-glow: rgba(6, 182, 212, 0.3);
+        --math-gold: #fbbf24;
+        --math-gold-light: #fcd34d;
+        --success-color: #10b981;
+        --success-light: #34d399;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --danger-light: #f87171;
+        --border-color: #334155;
+        --border-glow: rgba(6, 182, 212, 0.2);
+        --gradient-math: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+      }
+
+      body {
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--bg-primary);
+        background-image:
+          radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+          repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(6, 182, 212, 0.02) 100px, rgba(6, 182, 212, 0.02) 101px),
+          repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(6, 182, 212, 0.02) 100px, rgba(6, 182, 212, 0.02) 101px);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        padding: 1.5rem 2rem;
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: '∑ ∫ π √ ∞ Δ θ λ';
+        position: absolute;
+        top: 50%;
+        right: 2rem;
+        transform: translateY(-50%);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.5rem;
+        color: rgba(6, 182, 212, 0.15);
+        letter-spacing: 0.5rem;
+        pointer-events: none;
+      }
+
+      .header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .logo-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient-math);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+
+      .header-text h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header-text p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .header-buttons {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .help-btn {
+        padding: 0.7rem 1.25rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .help-btn:hover {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      /* Modales */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .modal-content {
+        background: var(--bg-secondary);
+        margin: 3% auto;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 700px;
+        max-height: 85vh;
+        overflow-y: auto;
+        color: var(--text-primary);
+        position: relative;
+      }
+
+      .modal-content h2 {
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+      }
+
+      .close-modal,
+      .close-config-modal {
+        color: var(--text-secondary);
+        float: right;
+        font-size: 1.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close-modal:hover,
+      .close-config-modal:hover {
+        color: var(--accent-primary);
+      }
+
+      .help-section {
+        margin-bottom: 1.25rem;
+        padding: 1rem;
+        background: var(--bg-tertiary);
+        border-left: 4px solid var(--accent-primary);
+        border-radius: 6px;
+      }
+
+      .help-section h3 {
+        color: var(--accent-primary);
+        margin-bottom: 0.5rem;
+        font-size: 1.05rem;
+      }
+
+      .help-section p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+      }
+
+      .help-section a {
+        color: var(--math-gold);
+      }
+
+      .help-section.math-highlight {
+        border-left-color: var(--math-gold);
+        background: rgba(251, 191, 36, 0.08);
+      }
+
+      .help-section.math-highlight h3 {
+        color: var(--math-gold);
+      }
+
+      /* Container */
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        flex: 1;
+        width: 100%;
+      }
+
+      .config-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .config-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: var(--accent-primary);
+      }
+
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .control-group label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .control-group select,
+      .control-group input[type='number'],
+      .control-group input[type='text'] {
+        padding: 0.7rem 0.9rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+      }
+
+      .control-group select:focus,
+      .control-group input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.75rem 1rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        user-select: none;
+      }
+
+      .checkbox-group:hover {
+        border-color: var(--accent-primary);
+      }
+
+      .checkbox-group input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--accent-primary);
+      }
+
+      .checkbox-group span {
+        font-size: 0.9rem;
+      }
+
+      /* PDF Upload */
+      .pdf-upload-area {
+        margin-top: 1rem;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border: 2px dashed var(--border-color);
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .pdf-upload-area.drag-over {
+        border-color: var(--accent-primary);
+        background: rgba(6, 182, 212, 0.05);
+      }
+
+      .pdf-upload-btn {
+        padding: 0.7rem 1.25rem;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+      }
+
+      .pdf-upload-btn:hover {
+        border-color: var(--accent-primary);
+      }
+
+      .pdf-info {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+
+      .pdf-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        justify-content: center;
+      }
+
+      .pdf-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        font-size: 0.85rem;
+      }
+
+      .pdf-remove {
+        background: none;
+        border: none;
+        color: var(--danger-color);
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      /* Main Grid */
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 1.5rem;
+      }
+
+      .chat-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+      }
+
+      .chat-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .chat-header h2 {
+        font-size: 1.15rem;
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .message {
+        display: flex;
+        gap: 0.75rem;
+        max-width: 100%;
+      }
+
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        background: var(--bg-tertiary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .user-message .message-avatar {
+        background: var(--gradient-math);
+      }
+
+      .message-content {
+        background: var(--bg-tertiary);
+        padding: 0.9rem 1.1rem;
+        border-radius: 12px;
+        flex: 1;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+      }
+
+      .user-message .message-content {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid var(--border-glow);
+      }
+
+      .copy-btn {
+        margin-top: 0.6rem;
+        padding: 0.3rem 0.7rem;
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+
+      .copy-btn:hover {
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
+      }
+
+      .chat-input {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .input-container {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .input-container textarea {
+        flex: 1;
+        padding: 0.9rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem;
+        resize: none;
+        min-height: 56px;
+        transition: all 0.3s ease;
+      }
+
+      .input-container textarea:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+
+      .send-btn {
+        padding: 0.9rem 1.5rem;
+        background: var(--gradient-math);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+
+      .send-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+      .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .action-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+
+      .action-btn {
+        width: 100%;
+        padding: 0.9rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.92rem;
+        font-family: 'Space Grotesk', sans-serif;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, var(--math-gold), #f59e0b);
+        color: var(--bg-primary);
+        margin-bottom: 0.75rem;
+      }
+
+      .download-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+      }
+      .download-btn:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+
+      .preview-btn {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: white;
+        margin-bottom: 0.75rem;
+      }
+      .preview-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+      }
+      .preview-btn:disabled {
+        background: var(--bg-tertiary);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+
+      .clear-btn {
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid var(--danger-color);
+      }
+      .clear-btn:hover:not(:disabled) {
+        background: var(--danger-color);
+        color: white;
+      }
+      .clear-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .counter-card {
+        text-align: center;
+        padding: 1.75rem 1.25rem;
+      }
+
+      .counter-number {
+        font-size: 3rem;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--gradient-math);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.4rem;
+      }
+
+      .counter-label {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .stats-card {
+        padding: 1rem 1.25rem;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      }
+
+      .stat-row:last-child {
+        border-bottom: none;
+      }
+      .stat-label {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+      }
+      .stat-value {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+      }
+
+      footer {
+        text-align: center;
+        padding: 1.75rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        font-size: 0.88rem;
+      }
+      footer p {
+        line-height: 1.8;
+      }
+
+      @media (max-width: 1024px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+        .sidebar > * {
+          flex: 1;
+          min-width: 200px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+        .header-content {
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+        }
+        .header::before {
+          display: none;
+        }
+        .config-grid {
+          grid-template-columns: 1fr;
+        }
+        .chat-container {
+          height: 480px;
+        }
+        .header-left {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="logo-icon">∑</div>
+          <div class="header-text">
+            <h1>Generador HTML de matemáticas</h1>
+            <p>GEDparaHispanos • Cuestionarios interactivos con feedback</p>
+          </div>
+        </div>
+        <div class="header-buttons">
+          <button id="configBtn" class="help-btn">
+            <span>⚙️</span>
+            Configurar API
+          </button>
+          <button id="helpBtn" class="help-btn">
+            <span>?</span>
+            Ayuda
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Configuración de API -->
+    <div id="configModal" class="modal">
+      <div class="modal-content">
+        <span class="close-config-modal">&times;</span>
+        <h2>⚙️ Configuración de API de Groq</h2>
+
+        <div class="help-section">
+          <h3>🔑 ¿Por qué necesitas una API key?</h3>
+          <p>
+            Este generador utiliza el modelo Llama 3.3 70B a través de la API gratuita de Groq para crear preguntas. Cada profesor debe usar su propia clave personal, que se obtiene de forma gratuita
+            en menos de un minuto.
+          </p>
+        </div>
+
+        <div class="help-section math-highlight">
+          <h3>📝 Pasos para obtener tu clave gratuita</h3>
+          <ol style="line-height: 2; font-size: 1rem; padding-left: 1.25rem">
+            <li>
+              Ve a
+              <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>
+            </li>
+            <li>Regístrate con tu correo o cuenta de Google (no necesitas tarjeta de crédito)</li>
+            <li>
+              Haz clic en
+              <strong>"Create API Key"</strong>
+            </li>
+            <li>
+              Copia la clave (empieza con
+              <code>gsk_...</code>
+              )
+            </li>
+            <li>
+              Pégala en el campo de abajo y haz clic en
+              <strong>Guardar</strong>
+            </li>
+          </ol>
+        </div>
+
+        <div class="help-section">
+          <h3>🔐 Tu clave en tu navegador</h3>
+          <p>
+            Tu clave se guarda
+            <strong>únicamente en tu navegador</strong>
+            (almacenamiento local). No se envía a ningún servidor externo más que a la API de Groq cuando generas preguntas. Nadie más puede verla.
+          </p>
+        </div>
+
+        <div class="help-section" style="border-left-color: var(--math-gold)">
+          <h3>🗝️ Pega tu clave aquí:</h3>
+          <input
+            type="password"
+            id="apiKeyInput"
+            placeholder="gsk_..."
+            style="
+              width: 100%;
+              padding: 0.8rem 1rem;
+              background: var(--bg-card);
+              border: 1px solid var(--border-color);
+              border-radius: 8px;
+              color: var(--text-primary);
+              font-family: 'JetBrains Mono', monospace;
+              font-size: 0.95rem;
+              margin-top: 0.5rem;
+            " />
+          <div style="display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap">
+            <button id="saveApiKeyBtn" class="help-btn" style="background: var(--accent-primary); color: white; border-color: var(--accent-primary)">💾 Guardar clave</button>
+            <button id="clearApiKeyBtn" class="help-btn" style="border-color: var(--danger-color); color: var(--danger-color)">🗑️ Borrar clave</button>
+            <button id="toggleVisibilityBtn" class="help-btn">👁️ Mostrar/Ocultar</button>
+          </div>
+          <p id="apiKeyStatus" style="margin-top: 0.75rem; font-size: 0.88rem"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Ayuda -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>📘 Guía del Generador HTML</h2>
+
+        <div class="help-section">
+          <h3>🎯 ¿Qué hace este generador?</h3>
+          <p>
+            Crea cuestionarios interactivos de matemáticas en formato HTML autocontenido, ideales para publicar en GEDparaHispanos o cualquier sitio web. Cada cuestionario incluye feedback específico
+            para cada respuesta — incluso para los distractores — explicando el error común que produce esa respuesta.
+          </p>
+        </div>
+
+        <div class="help-section math-highlight">
+          <h3>📋 Tipos de pregunta soportados</h3>
+          <p>
+            <strong>• Opción múltiple:</strong>
+            4 opciones, una correcta. La forma más recomendada para feedback rico.
+          </p>
+          <p>
+            <strong>• Respuesta múltiple:</strong>
+            varias respuestas correctas (2-3).
+          </p>
+          <p>
+            <strong>• Verdadero/Falso:</strong>
+            afirmaciones matemáticas.
+          </p>
+          <p>
+            <strong>• Respuesta corta:</strong>
+            el estudiante escribe la respuesta numérica.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>⚙️ Niveles de dificultad</h3>
+          <p>
+            <strong>• Básico:</strong>
+            GED nivel 1, operaciones fundamentales
+          </p>
+          <p>
+            <strong>• Intermedio:</strong>
+            GED nivel 2, problemas de 2-3 pasos
+          </p>
+          <p>
+            <strong>• Avanzado:</strong>
+            GED nivel 3, aplicaciones complejas
+          </p>
+          <p>
+            <strong>• Experto:</strong>
+            múltiples conceptos combinados
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>📝 Enfoques disponibles</h3>
+          <p>
+            <strong>• Problemas de palabras:</strong>
+            situaciones reales, contextos prácticos
+          </p>
+          <p>
+            <strong>• Cálculo directo:</strong>
+            ejercicios sin contexto narrativo
+          </p>
+          <p>
+            <strong>• Conceptual:</strong>
+            comprensión de principios
+          </p>
+          <p>
+            <strong>• Análisis de datos:</strong>
+            interpretación de gráficas y tablas
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h3>💡 Flujo de trabajo</h3>
+          <p>1. Configura los parámetros (tipo, cantidad, área, nivel...)</p>
+          <p>2. Escribe el tema en el chat o sube un PDF</p>
+          <p>
+            3. Pulsa
+            <strong>Generar</strong>
+            — la IA crea las preguntas con feedback
+          </p>
+          <p>
+            4. Pulsa
+            <strong>Vista previa</strong>
+            para probar el cuestionario aquí mismo
+          </p>
+          <p>
+            5. Pulsa
+            <strong>Descargar HTML</strong>
+            y súbelo a GitHub Pages o donde quieras
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Panel de Configuración -->
+      <div class="config-panel">
+        <div class="config-title">
+          <span>⚙️</span>
+          Configuración del cuestionario
+        </div>
+
+        <div class="config-grid">
+          <div class="control-group">
+            <label>Tipo de Pregunta</label>
+            <select id="questionType">
+              <option value="multiple_choice">Opción múltiple (una correcta)</option>
+              <option value="multiple_answer">Respuesta múltiple (varias correctas)</option>
+              <option value="short_answer">Respuesta corta numérica</option>
+              <option value="true_false">Verdadero / Falso</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Cantidad de Preguntas (máx. 10)</label>
+            <input type="number" id="questionCount" value="5" min="1" max="10" />
+          </div>
+
+          <div class="control-group">
+            <label>Área Matemática</label>
+            <select id="mathArea">
+              <option value="aritmetica">Aritmética y Números</option>
+              <option value="algebra">Álgebra</option>
+              <option value="geometria">Geometría</option>
+              <option value="estadistica">Estadística y Probabilidad</option>
+              <option value="funciones">Funciones y Gráficas</option>
+              <option value="mixto" selected>Mixto (Variado)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Enfoque del Problema</label>
+            <select id="questionFocus">
+              <option value="problemas" selected>Problemas de palabras (contexto real)</option>
+              <option value="calculo">Cálculo directo (ejercicios)</option>
+              <option value="conceptual">Conceptual (comprensión)</option>
+              <option value="datos">Análisis de datos (gráficas/tablas)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Nivel de Dificultad</label>
+            <select id="difficultyLevel">
+              <option value="basico">Básico (GED Nivel 1)</option>
+              <option value="intermedio" selected>Intermedio (GED Nivel 2)</option>
+              <option value="avanzado">Avanzado (GED Nivel 3)</option>
+              <option value="experto">Experto (Desafío)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Título del cuestionario</label>
+            <input type="text" id="quizTitle" value="Cuestionario de Matemáticas" placeholder="Título visible en el HTML" />
+          </div>
+        </div>
+
+        <div class="config-grid" style="margin-top: 1rem">
+          <label class="checkbox-group" for="includeSteps">
+            <input type="checkbox" id="includeSteps" />
+            <span>📝 Mostrar pasos de solución</span>
+          </label>
+          <label class="checkbox-group" for="realContext">
+            <input type="checkbox" id="realContext" checked />
+            <span>🌍 Contextos de la vida real</span>
+          </label>
+        </div>
+
+        <div class="pdf-upload-area" id="pdfDropZone">
+          <button id="pdfUploadBtn" class="pdf-upload-btn">📄 Cargar PDFs (Opcional)</button>
+          <input type="file" id="pdfInput" accept=".pdf" multiple style="display: none" />
+          <p class="pdf-info">Arrastra PDFs aquí o haz clic • Máximo 5 archivos</p>
+          <div id="pdfPreview" class="pdf-preview"></div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <div class="chat-container">
+          <div class="chat-header">
+            <span style="font-size: 1.4rem">🧮</span>
+            <h2>Generador de preguntas con feedback</h2>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input">
+            <div class="input-container">
+              <textarea id="messageInput" placeholder="Describe el tema matemático (ej: ecuaciones cuadráticas, porcentajes, área de círculos...)"></textarea>
+              <button id="sendBtn" class="send-btn">
+                <span>∑</span>
+                Generar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="action-card">
+            <button id="previewBtn" class="action-btn preview-btn" disabled>👁️ Vista previa</button>
+            <button id="downloadBtn" class="action-btn download-btn" disabled>📥 Descargar HTML</button>
+            <button id="clearBtn" class="action-btn clear-btn" disabled>🗑️ Limpiar Todo</button>
+          </div>
+
+          <div class="action-card counter-card">
+            <div id="counterNumber" class="counter-number">0</div>
+            <div class="counter-label">Preguntas Generadas</div>
+          </div>
+
+          <div class="action-card stats-card">
+            <div class="stat-row">
+              <span class="stat-label">Sesiones:</span>
+              <span id="totalSessions" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">PDFs cargados:</span>
+              <span id="pdfsLoaded" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Formato:</span>
+              <span class="stat-value">HTML</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Para:</span>
+              <span class="stat-value" style="color: var(--math-gold)">GEDparaHispanos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        Generador HTML de matemáticas para GEDparaHispanos
+        <br />
+        Cuestionarios autocontenidos, responsivos y con feedback inteligente
+        <br />
+        Creado con Claude y API de Groq • por José M. Fernández (Zhema)
+      </p>
+    </footer>
+
+    <script>
+      // ========================================================================
+      // CONFIGURACIÓN INICIAL
+      // ========================================================================
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      let generatedQuestions = [];
+      let totalSessions = parseInt(localStorage.getItem('mathSessions_html') || '0');
+      let loadedPDFs = [];
+
+      document.getElementById('totalSessions').textContent = totalSessions;
+
+      // ========================================================================
+      // MODALES (Ayuda y Configuración de API)
+      // ========================================================================
+      const helpModal = document.getElementById('helpModal');
+      const configModal = document.getElementById('configModal');
+      const helpBtn = document.getElementById('helpBtn');
+      const configBtn = document.getElementById('configBtn');
+      const closeModal = document.querySelector('.close-modal');
+      const closeConfigModal = document.querySelector('.close-config-modal');
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const apiKeyStatus = document.getElementById('apiKeyStatus');
+      const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+      const clearApiKeyBtn = document.getElementById('clearApiKeyBtn');
+      const toggleVisibilityBtn = document.getElementById('toggleVisibilityBtn');
+
+      helpBtn.onclick = () => {
+        helpModal.style.display = 'block';
+      };
+      configBtn.onclick = () => {
+        configModal.style.display = 'block';
+        updateApiKeyStatus();
+      };
+      closeModal.onclick = () => {
+        helpModal.style.display = 'none';
+      };
+      closeConfigModal.onclick = () => {
+        configModal.style.display = 'none';
+      };
+
+      function updateApiKeyStatus() {
+        const saved = localStorage.getItem('groq_api_key_zhema');
+        if (saved) {
+          apiKeyStatus.innerHTML = '✅ <strong style="color: var(--success-color);">Clave guardada</strong> (' + saved.substring(0, 8) + '...)';
+          apiKeyInput.value = saved;
+        } else {
+          apiKeyStatus.innerHTML = '⚠️ <strong style="color: var(--warning-color);">No hay clave configurada</strong>';
+          apiKeyInput.value = '';
+        }
+      }
+
+      saveApiKeyBtn.onclick = () => {
+        const key = apiKeyInput.value.trim();
+        if (!key) {
+          alert('Pega una clave válida.');
+          return;
+        }
+        if (!key.startsWith('gsk_')) {
+          if (!confirm('La clave no empieza con "gsk_". ¿Guardarla de todas formas?')) return;
+        }
+        localStorage.setItem('groq_api_key_zhema', key);
+        updateApiKeyStatus();
+        setTimeout(() => {
+          configModal.style.display = 'none';
+        }, 800);
+      };
+
+      clearApiKeyBtn.onclick = () => {
+        if (confirm('¿Borrar la clave guardada?')) {
+          localStorage.removeItem('groq_api_key_zhema');
+          updateApiKeyStatus();
+        }
+      };
+
+      toggleVisibilityBtn.onclick = () => {
+        apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+      };
+
+      window.onclick = e => {
+        if (e.target == helpModal) helpModal.style.display = 'none';
+        if (e.target == configModal) configModal.style.display = 'none';
+      };
+
+      // Abrir modal de config si no hay clave guardada
+      if (!localStorage.getItem('groq_api_key_zhema')) {
+        setTimeout(() => {
+          configModal.style.display = 'block';
+          updateApiKeyStatus();
+        }, 500);
+      }
+
+      // ========================================================================
+      // PDF UPLOAD
+      // ========================================================================
+      const pdfDropZone = document.getElementById('pdfDropZone');
+      const pdfInput = document.getElementById('pdfInput');
+      const pdfUploadBtn = document.getElementById('pdfUploadBtn');
+      const pdfPreview = document.getElementById('pdfPreview');
+
+      pdfUploadBtn.addEventListener('click', () => pdfInput.click());
+      pdfInput.addEventListener('change', async e => {
+        await handlePDFFiles(Array.from(e.target.files));
+      });
+
+      pdfDropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        pdfDropZone.classList.add('drag-over');
+      });
+      pdfDropZone.addEventListener('dragleave', e => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('drag-over');
+      });
+      pdfDropZone.addEventListener('drop', async e => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('drag-over');
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+        await handlePDFFiles(files);
+      });
+
+      async function handlePDFFiles(files) {
+        if (loadedPDFs.length + files.length > 5) {
+          alert('Máximo 5 PDFs permitidos');
+          return;
+        }
+        for (const file of files) {
+          try {
+            const text = await extractTextFromPDF(file);
+            loadedPDFs.push({name: file.name, text: text});
+          } catch (error) {
+            console.error('Error procesando PDF:', error);
+            alert('Error al procesar ' + file.name);
+          }
+        }
+        updatePDFPreview();
+        document.getElementById('pdfsLoaded').textContent = loadedPDFs.length;
+      }
+
+      async function extractTextFromPDF(file) {
+        if (typeof pdfjsLib === 'undefined') {
+          throw new Error('PDF.js no está disponible. Verifica tu conexión a Internet.');
+        }
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+        let fullText = '';
+        const maxPages = Math.min(pdf.numPages, 10);
+        for (let i = 1; i <= maxPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        return fullText.slice(0, 5000);
+      }
+
+      function updatePDFPreview() {
+        pdfPreview.innerHTML = '';
+        loadedPDFs.forEach((pdf, index) => {
+          const item = document.createElement('div');
+          item.className = 'pdf-item';
+          item.innerHTML =
+            '📄 <span style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + pdf.name + '</span><button class="pdf-remove" data-index="' + index + '">✕</button>';
+          pdfPreview.appendChild(item);
+        });
+        document.querySelectorAll('.pdf-remove').forEach(btn => {
+          btn.addEventListener('click', e => {
+            loadedPDFs.splice(parseInt(e.target.dataset.index), 1);
+            updatePDFPreview();
+            document.getElementById('pdfsLoaded').textContent = loadedPDFs.length;
+          });
+        });
+      }
+
+      // ========================================================================
+      // PARSEO DE PREGUNTAS (con FEEDBACK por opción)
+      // ========================================================================
+      // Formato esperado de la IA:
+      // 1. [Pregunta]
+      // *a) Correcta || FB: Explicación de por qué es correcta
+      // b) Incorrecta || FB: Explicación del error común que produce esta respuesta
+      // c) Incorrecta || FB: ...
+      // d) Incorrecta || FB: ...
+      // Pasos: [si está activado]
+      //
+      // Para true_false: "(VERDADERO) || FB_VERDADERO: ... || FB_FALSO: ..."
+      // Para short_answer: "blank 1. [pregunta] || RESPUESTA: 42 || FB_ACIERTO: ... || FB_ERROR: ..."
+
+      function parseGeneratedQuestions(aiResponse, questionType) {
+        const questions = [];
+        const lines = aiResponse
+          .split('\n')
+          .map(l => l.trim())
+          .filter(l => l.length > 0);
+        let currentQuestion = null;
+        let questionNumber = 0;
+
+        // Limpia bucles de repetición en el texto del feedback antes de guardarlo.
+        function cleanLoopedText(text) {
+          if (!text || text.length < 100) return text;
+          let t = String(text);
+          // 1) Frases repetidas (>=30 chars) que aparecen 3+ veces
+          const repeatedPattern = /([^.!?]{30,150}[.!?,])([\s\S]*?\1){2,}/;
+          const m = t.match(repeatedPattern);
+          if (m) {
+            const firstIdx = t.indexOf(m[1]);
+            if (firstIdx >= 0) t = t.substring(0, firstIdx + m[1].length).trim();
+          }
+          // 2) Conectores encadenados ("pero si", "sin embargo")
+          const connectors = ['pero si', 'sin embargo', 'pero el perímetro', 'pero si el', 'pero si se'];
+          for (const c of connectors) {
+            const lower = t.toLowerCase();
+            const first = lower.indexOf(c);
+            if (first < 0) continue;
+            const second = lower.indexOf(c, first + c.length);
+            if (second < 0) continue;
+            const third = lower.indexOf(c, second + c.length);
+            if (third >= 0) {
+              t = t
+                .substring(0, second)
+                .trim()
+                .replace(/[,;]\s*$/, '.');
+              break;
+            }
+          }
+          // 3) Hard cap
+          if (t.length > 500) {
+            const cut = t.substring(0, 500);
+            const lastPunct = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
+            t = lastPunct > 200 ? cut.substring(0, lastPunct + 1) : cut + '…';
+          }
+          return t;
+        }
+
+        function splitFeedback(line) {
+          // Separa "texto || FB: feedback" en {text, feedback}
+          const idx = line.indexOf('||');
+          if (idx === -1) return {text: line, feedback: ''};
+          const text = line.substring(0, idx).trim();
+          const rest = line.substring(idx + 2).trim();
+          // Quitar prefijo "FB:" o "FB_X:"
+          const feedback = rest.replace(/^FB[_A-Z]*:\s*/i, '').trim();
+          return {text: text, feedback: cleanLoopedText(feedback)};
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          // ¿Es inicio de nueva pregunta?
+          if (/^\d+\./.test(line) || /^(blank)\s+\d+\./i.test(line)) {
+            if (currentQuestion) questions.push(currentQuestion);
+            questionNumber++;
+            let questionText = line.replace(/^(blank)?\s*\d+\.\s*/i, '').trim();
+
+            currentQuestion = {
+              id: 'q_' + questionNumber,
+              number: questionNumber,
+              text: questionText,
+              type: questionType,
+              options: [],
+              correctAnswer: null,
+              feedbackCorrect: '',
+              feedbackIncorrect: '',
+              steps: ''
+            };
+          } else if (currentQuestion) {
+            // Líneas dentro de una pregunta
+            if (questionType === 'multiple_choice' || questionType === 'multiple_answer') {
+              if (/^\*?[a-d][\).]/.test(line.toLowerCase())) {
+                const isCorrect = line.startsWith('*');
+                const optionLine = line.replace(/^\*?\s*[a-d][\).]\s*/i, '').trim();
+                const parts = splitFeedback(optionLine);
+                currentQuestion.options.push({
+                  text: parts.text,
+                  correct: isCorrect,
+                  feedback: parts.feedback
+                });
+              } else if (/^pasos?\s*:/i.test(line)) {
+                currentQuestion.steps = cleanLoopedText(line.replace(/^pasos?\s*:\s*/i, '').trim());
+              }
+            } else if (questionType === 'true_false') {
+              // Línea esperada: "(VERDADERO) || FB_VERDADERO: ... || FB_FALSO: ..."
+              const partes = line.split('||').map(p => p.trim());
+              if (partes.length >= 1) {
+                const match = partes[0].match(/\((VERDADERO|FALSO)\)/i);
+                if (match) currentQuestion.correctAnswer = match[1].toUpperCase() === 'VERDADERO';
+                partes.forEach(p => {
+                  if (/^FB_VERDADERO:/i.test(p)) {
+                    const fb = cleanLoopedText(p.replace(/^FB_VERDADERO:\s*/i, '').trim());
+                    if (currentQuestion.correctAnswer) currentQuestion.feedbackCorrect = fb;
+                    else currentQuestion.feedbackIncorrect = fb;
+                  } else if (/^FB_FALSO:/i.test(p)) {
+                    const fb = cleanLoopedText(p.replace(/^FB_FALSO:\s*/i, '').trim());
+                    if (!currentQuestion.correctAnswer) currentQuestion.feedbackCorrect = fb;
+                    else currentQuestion.feedbackIncorrect = fb;
+                  }
+                });
+              }
+              if (/^pasos?\s*:/i.test(line)) currentQuestion.steps = cleanLoopedText(line.replace(/^pasos?\s*:\s*/i, '').trim());
+            } else if (questionType === 'short_answer') {
+              if (/^respuesta\s*:/i.test(line)) {
+                currentQuestion.correctAnswer = line.replace(/^respuesta\s*:\s*/i, '').trim();
+              } else if (/^FB_ACIERTO:/i.test(line)) {
+                currentQuestion.feedbackCorrect = cleanLoopedText(line.replace(/^FB_ACIERTO:\s*/i, '').trim());
+              } else if (/^FB_ERROR:/i.test(line)) {
+                currentQuestion.feedbackIncorrect = cleanLoopedText(line.replace(/^FB_ERROR:\s*/i, '').trim());
+              } else if (/^pasos?\s*:/i.test(line)) {
+                currentQuestion.steps = cleanLoopedText(line.replace(/^pasos?\s*:\s*/i, '').trim());
+              }
+            }
+          }
+        }
+        if (currentQuestion) questions.push(currentQuestion);
+
+        // Validar y completar
+        questions.forEach(q => {
+          if (q.type === 'multiple_choice') {
+            const hasCorrect = q.options.some(opt => opt.correct);
+            if (!hasCorrect && q.options.length > 0) q.options[0].correct = true;
+            while (q.options.length < 4) q.options.push({text: 'Opción ' + (q.options.length + 1), correct: false, feedback: ''});
+            if (q.options.length > 4) q.options = q.options.slice(0, 4);
+          } else if (q.type === 'multiple_answer') {
+            while (q.options.length < 4) q.options.push({text: 'Opción ' + (q.options.length + 1), correct: false, feedback: ''});
+            if (q.options.length > 4) q.options = q.options.slice(0, 4);
+          }
+        });
+
+        return questions;
+      }
+
+      // ========================================================================
+      // LLAMADA A LA API DE GROQ
+      // ========================================================================
+      function getGroqApiKey() {
+        return localStorage.getItem('groq_api_key_zhema') || '';
+      }
+
+      async function generateMathResponse(questionType, questionCount, sourceContent, mathArea, questionFocus, difficultyLevel, includeSteps, realContext) {
+        const GROQ_API_KEY = getGroqApiKey();
+        if (!GROQ_API_KEY) {
+          return '🔑 **No has configurado tu clave de API de Groq.**\n\nHaz clic en **⚙️ Configurar API** arriba a la derecha para añadirla. Se obtiene gratis en console.groq.com/keys';
+        }
+
+        const mathAreaDescriptions = {
+          aritmetica: 'aritmética: operaciones con enteros, fracciones, decimales, porcentajes, proporciones, razones',
+          algebra: 'álgebra: ecuaciones lineales, cuadráticas, expresiones algebraicas, sistemas de ecuaciones, desigualdades',
+          geometria: 'geometría: áreas, perímetros, volúmenes, teorema de Pitágoras, ángulos, figuras geométricas, coordenadas',
+          estadistica: 'estadística y probabilidad: media, mediana, moda, rango, probabilidad simple, interpretación de datos',
+          funciones: 'funciones y gráficas: funciones lineales, cuadráticas, pendiente, interceptos, interpretación de gráficas',
+          mixto: 'contenido matemático variado apropiado para GED'
+        };
+
+        const focusDescriptions = {
+          problemas: 'PROBLEMAS DE PALABRAS con contextos de la vida real. Cada problema presenta una situación práctica.',
+          calculo: 'EJERCICIOS DE CÁLCULO DIRECTO SIN CONTEXTO NARRATIVO. Solo expresiones matemáticas puras.',
+          conceptual: 'PREGUNTAS CONCEPTUALES que evalúen comprensión de principios, propiedades, definiciones.',
+          datos: 'PROBLEMAS DE ANÁLISIS DE DATOS: interpretar tablas, gráficas, diagramas.'
+        };
+
+        const levelDescriptions = {
+          basico: 'NIVEL BÁSICO (GED Nivel 1): un solo paso, números pequeños, operaciones básicas',
+          intermedio: 'NIVEL INTERMEDIO (GED Nivel 2): 2-3 pasos, fracciones y decimales, ecuaciones simples',
+          avanzado: 'NIVEL AVANZADO (GED Nivel 3): multi-paso complejo, álgebra intermedia, geometría aplicada',
+          experto: 'NIVEL EXPERTO: combina múltiples conceptos, razonamiento avanzado'
+        };
+
+        // ====================================================================
+        // FORMATOS CON FEEDBACK POR OPCIÓN
+        // ====================================================================
+        const questionTypeInstructions = {
+          multiple_choice: {
+            format:
+              '1. [Pregunta o ejercicio]\n' +
+              '*a) Respuesta CORRECTA || FB: Explica brevemente POR QUÉ esta es la correcta, reafirmando el razonamiento clave.\n' +
+              'b) Distractor basado en error común || FB: Explica el ERROR ESPECÍFICO que produce esta respuesta (ej: "olvidó multiplicar por 2", "confundió suma con resta", "no convirtió las unidades").\n' +
+              'c) Distractor plausible || FB: Explica el error específico que produciría esta respuesta.\n' +
+              'd) Distractor plausible || FB: Explica el error específico que produciría esta respuesta.',
+            rules:
+              'CRÍTICO: EXACTAMENTE 4 opciones (a,b,c,d). SOLO UNA correcta con asterisco (*) ANTES de la letra. ' +
+              'CRÍTICO: CADA opción DEBE terminar con " || FB: " seguido de feedback específico de 1-2 oraciones. ' +
+              'Para los distractores, identifica un error de razonamiento o cálculo REAL que produciría exactamente ese número. ' +
+              'NO uses feedback genérico tipo "esta es incorrecta" — explica el error.'
+          },
+          multiple_answer: {
+            format:
+              '1. [Pregunta que puede tener múltiples respuestas correctas]\n' +
+              '*a) Correcta || FB: Por qué es correcta\n' +
+              'b) Incorrecta || FB: Por qué es incorrecta (error específico)\n' +
+              '*c) Correcta || FB: Por qué es correcta\n' +
+              'd) Incorrecta || FB: Por qué es incorrecta (error específico)',
+            rules: 'EXACTAMENTE 4 opciones. 2-3 correctas marcadas con asterisco (*). Cada opción DEBE incluir " || FB: " con feedback específico.'
+          },
+          short_answer: {
+            format:
+              'blank 1. [Ejercicio matemático]\n' +
+              'RESPUESTA: [Respuesta numérica exacta]\n' +
+              'FB_ACIERTO: Felicita y reafirma brevemente el método correcto.\n' +
+              'FB_ERROR: Explica el procedimiento correcto en 1-2 oraciones para ayudar al estudiante.',
+            rules: 'Cada ejercicio empieza con "blank X.". Después: línea RESPUESTA, línea FB_ACIERTO, línea FB_ERROR. Obligatorio incluir las tres.'
+          },
+          true_false: {
+            format:
+              '1. [Afirmación matemática] (VERDADERO) || FB_VERDADERO: Explica por qué la afirmación es verdadera. || FB_FALSO: Explica al estudiante que se equivocó y cuál es la verdad.\n' +
+              '2. [Afirmación matemática] (FALSO) || FB_VERDADERO: Explica al estudiante por qué pensó que era verdad pero no lo es. || FB_FALSO: Confirma que es falso y por qué.',
+            rules: 'Cada afirmación termina con (VERDADERO) o (FALSO). DEBE incluir " || FB_VERDADERO: ... || FB_FALSO: ..." con ambos feedbacks específicos.'
+          }
+        };
+
+        const typeInstructions = questionTypeInstructions[questionType];
+        const esEjercicio = questionFocus === 'calculo';
+        const tipoContenido = esEjercicio ? 'ejercicios' : 'problemas';
+        const contextInstruction = realContext && questionFocus === 'problemas' ? 'USA CONTEXTOS REALISTAS: compras, cocina, construcción, finanzas personales, viajes, deportes, trabajo.' : '';
+        const stepsInstruction = includeSteps
+          ? 'Después del feedback de todas las opciones, añade UNA LÍNEA al final con: Pasos: [resumen breve de los pasos para resolver, máximo 2-3 oraciones]'
+          : '';
+
+        const focusSpecificInstructions = {
+          problemas:
+            '- Situaciones reales que requieran razonamiento.\n- Distractores basados en errores comunes de interpretación.\n- Variedad de contextos (compras, trabajo, medidas, tiempo, dinero).\n- Números realistas.\n',
+          calculo:
+            '- Expresiones matemáticas directas SIN contexto narrativo.\n- Ejemplos: "Resuelve: 3x + 7 = 22", "Simplifica: 2/3 + 5/6", "Calcula: 15% de 240".\n- Distractores = errores de cálculo comunes.\n- Variedad de operaciones.\n',
+          conceptual: '- Pregunta sobre PROPIEDADES y DEFINICIONES.\n- Evalúa COMPRENSIÓN, no solo cálculo.\n- Distractores = conceptos erróneos comunes.\n',
+          datos: '- Describe una tabla o gráfica y pregunta sobre ella.\n- Interpretar tendencias, calcular promedios, comparar datos.\n- Distractores = interpretaciones incorrectas comunes.\n'
+        };
+
+        const systemPrompt =
+          'Eres un experto profesor de matemáticas para adultos hispanohablantes que estudian el GED. ' +
+          'Generas preguntas con FEEDBACK ESPECÍFICO para cada opción: para la correcta explicas brevemente el razonamiento clave en UNA SOLA ORACIÓN; para cada distractor identificas el ERROR REAL que produciría ese resultado (un error de cálculo, una confusión conceptual, un paso saltado) en UNA SOLA ORACIÓN. ' +
+          'REGLA INVIOLABLE: cada feedback debe tener MÁXIMO 2 oraciones (30 palabras máximo). NUNCA repitas frases. NUNCA digas "pero si se considera que..." varias veces. NUNCA entres en bucles de auto-corrección. Si te equivocaste en un cálculo, simplemente corrige y sigue, no repitas. ' +
+          'Nunca usas feedback genérico como "esto es incorrecto" — siempre explicas el error específico, pero en forma BREVE. ' +
+          'Usas notación matemática estándar: x^2, sqrt(), 3/4, π. ' +
+          'SIEMPRE sigues el formato exacto solicitado con el separador " || FB: ".';
+
+        const userPrompt =
+          'Genera EXACTAMENTE ' +
+          questionCount +
+          ' ' +
+          tipoContenido +
+          ' de matemáticas.\n\n' +
+          '⚠️ TEMA ESPECÍFICO OBLIGATORIO (TODAS las preguntas deben ser EXCLUSIVAMENTE sobre este tema):\n' +
+          sourceContent.substring(0, 2500) +
+          '\n\n' +
+          'NO mezcles otros temas. Si dice "radicales", TODAS deben ser de radicales.\n\n' +
+          'ÁREA GENERAL: ' +
+          mathAreaDescriptions[mathArea] +
+          '\n' +
+          'TIPO: ' +
+          focusDescriptions[questionFocus] +
+          '\n' +
+          'DIFICULTAD: ' +
+          levelDescriptions[difficultyLevel] +
+          '\n\n' +
+          contextInstruction +
+          '\n\n' +
+          'FORMATO OBLIGATORIO (sigue EXACTAMENTE este patrón):\n' +
+          typeInstructions.format +
+          '\n\n' +
+          stepsInstruction +
+          '\n\n' +
+          'REGLAS CRÍTICAS:\n' +
+          typeInstructions.rules +
+          '\n\n' +
+          '⛔ REGLA ANTI-REPETICIÓN: Cada feedback debe ser una sola oración breve (máximo 25-30 palabras). PROHIBIDO repetir la misma idea con frases como "pero si se considera...", "sin embargo...", "también podríamos decir...". Si el feedback queda largo, RECÓRTALO. La claridad vale más que la extensión.\n\n' +
+          'INSTRUCCIONES ESPECÍFICAS PARA ESTE ENFOQUE:\n' +
+          focusSpecificInstructions[questionFocus] +
+          '- Notación matemática: x^2, sqrt(), fracciones como 3/4\n' +
+          '- VERIFICA que cada opción tenga su feedback con " || FB: "\n' +
+          '- El feedback debe ser PEDAGÓGICO y ESPECÍFICO\n' +
+          '- TODAS las preguntas del MISMO tema arriba\n\n' +
+          'Responde ÚNICAMENTE con los ' +
+          tipoContenido +
+          ' en el formato exacto. Sin introducción ni conclusión.';
+
+        try {
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {Authorization: 'Bearer ' + GROQ_API_KEY, 'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: [
+                {role: 'system', content: systemPrompt},
+                {role: 'user', content: userPrompt}
+              ],
+              temperature: 0.7,
+              max_tokens: 3500,
+              frequency_penalty: 0.5,
+              presence_penalty: 0.3
+            })
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error('Groq API error: ' + (error.error?.message || response.statusText));
+          }
+
+          const data = await response.json();
+          let aiResponse = data.choices[0].message.content;
+          aiResponse = aiResponse
+            .replace(/^(Claro|Por supuesto|Aquí tienes|Perfecto|Vale).*?\n+/i, '')
+            .replace(/```[a-z]*\n?/g, '')
+            .trim();
+          return aiResponse;
+        } catch (error) {
+          console.error('Error con Groq:', error);
+          return '❌ Error: ' + error.message;
+        }
+      }
+
+      // ========================================================================
+      // CHAT UI
+      // ========================================================================
+      function addMessage(message, sender) {
+        const messagesContainer = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ' + sender + '-message';
+        messageDiv.setAttribute('data-original-text', message);
+
+        const avatar = sender === 'user' ? '👤' : '🧮';
+        messageDiv.innerHTML =
+          '<div class="message-avatar">' + avatar + '</div>' + '<div class="message-content">' + escapeHtml(message) + '<br><button onclick="copyMessage(this)" class="copy-btn">Copiar</button></div>';
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+          MathJax.typesetPromise([messageDiv]).catch(err => console.log('MathJax error:', err));
+        }
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function copyMessage(button) {
+        const messageDiv = button.closest('.message');
+        const originalText = messageDiv.getAttribute('data-original-text');
+        navigator.clipboard.writeText(originalText).then(() => {
+          button.textContent = '✓';
+          setTimeout(() => {
+            button.textContent = 'Copiar';
+          }, 2000);
+        });
+      }
+
+      // ========================================================================
+      // ENVÍO Y GENERACIÓN
+      // ========================================================================
+      const sendBtn = document.getElementById('sendBtn');
+      const input = document.getElementById('messageInput');
+      const previewBtn = document.getElementById('previewBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const clearBtn = document.getElementById('clearBtn');
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      sendBtn.addEventListener('click', sendMessage);
+      previewBtn.addEventListener('click', previewQuiz);
+      downloadBtn.addEventListener('click', downloadHTML);
+      clearBtn.addEventListener('click', clearAll);
+
+      async function sendMessage() {
+        const message = input.value.trim();
+        const questionType = document.getElementById('questionType').value;
+        let questionCount = parseInt(document.getElementById('questionCount').value) || 5;
+        const mathArea = document.getElementById('mathArea').value;
+        const questionFocus = document.getElementById('questionFocus').value;
+        const difficultyLevel = document.getElementById('difficultyLevel').value;
+        const includeSteps = document.getElementById('includeSteps').checked;
+        const realContext = document.getElementById('realContext').checked;
+
+        if (questionCount < 1 || questionCount > 10) {
+          alert('Ingresa entre 1 y 10 preguntas.');
+          return;
+        }
+
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span>⏳</span> Generando...';
+
+        totalSessions++;
+        localStorage.setItem('mathSessions_html', totalSessions);
+        document.getElementById('totalSessions').textContent = totalSessions;
+
+        let sourceContent = '';
+        let fullMessage = '';
+
+        if (loadedPDFs.length > 0) {
+          sourceContent = loadedPDFs.map(pdf => pdf.text).join('\n\n');
+          const fileNames = loadedPDFs.map(pdf => '"' + pdf.name + '"').join(', ');
+          fullMessage = message
+            ? 'Basándote en los PDFs (' + fileNames + '), crea ' + questionCount + ' problemas. Tema adicional: ' + message
+            : 'Basándote en los PDFs (' + fileNames + '), crea ' + questionCount + ' problemas.';
+        } else {
+          if (!message) {
+            alert('Escribe un tema matemático o sube un PDF.');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<span>∑</span> Generar';
+            return;
+          }
+          sourceContent = message;
+          fullMessage = 'Crea ' + questionCount + ' problemas sobre: ' + message;
+        }
+
+        addMessage(fullMessage, 'user');
+        input.value = '';
+
+        try {
+          const aiResponse = await generateMathResponse(questionType, questionCount, sourceContent, mathArea, questionFocus, difficultyLevel, includeSteps, realContext);
+          addMessage(aiResponse, 'ai');
+
+          const questions = parseGeneratedQuestions(aiResponse, questionType);
+          generatedQuestions.push(...questions);
+
+          document.getElementById('counterNumber').textContent = generatedQuestions.length;
+          previewBtn.disabled = false;
+          downloadBtn.disabled = false;
+          clearBtn.disabled = false;
+        } catch (error) {
+          addMessage('❌ Error al generar. Inténtalo de nuevo.', 'ai');
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<span>∑</span> Generar';
+        }
+      }
+
+      function clearAll() {
+        if (confirm('¿Limpiar todo?')) {
+          generatedQuestions = [];
+          loadedPDFs = [];
+          document.getElementById('chatMessages').innerHTML = '';
+          document.getElementById('counterNumber').textContent = '0';
+          document.getElementById('pdfsLoaded').textContent = '0';
+          updatePDFPreview();
+          previewBtn.disabled = true;
+          downloadBtn.disabled = true;
+          clearBtn.disabled = true;
+        }
+      }
+
+      // ========================================================================
+      // VISTA PREVIA Y DESCARGA DEL HTML AUTOCONTENIDO
+      // ========================================================================
+      function previewQuiz() {
+        const html = buildQuizHTML();
+        const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      }
+
+      function downloadHTML() {
+        try {
+          const html = buildQuizHTML();
+          if (!html) {
+            alert('No hay preguntas para descargar.');
+            return;
+          }
+          const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const now = new Date();
+          const timestamp = now.getFullYear() + ('0' + (now.getMonth() + 1)).slice(-2) + ('0' + now.getDate()).slice(-2) + '_' + ('0' + now.getHours()).slice(-2) + ('0' + now.getMinutes()).slice(-2);
+          const slug = (document.getElementById('quizTitle').value || 'cuestionario')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+          link.href = url;
+          link.download = slug + '_' + timestamp + '.html';
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 100);
+        } catch (error) {
+          console.error('Error al descargar HTML:', error);
+          alert('Error al generar el archivo: ' + error.message);
+        }
+      }
+
+      // ========================================================================
+      // CONSTRUCTOR DEL HTML AUTOCONTENIDO (es el corazón del generador)
+      // ========================================================================
+      function buildQuizHTML() {
+        if (generatedQuestions.length === 0) return '';
+        const title = document.getElementById('quizTitle').value || 'Cuestionario de Matemáticas';
+        const questionsJSON = JSON.stringify(generatedQuestions).replace(/<\/script>/gi, '<\\/script>');
+
+        return QUIZ_HTML_TEMPLATE.replace(/__TITLE__/g, escapeHtml(title))
+          .replace('/*__QUESTIONS_DATA__*/', 'window.__QUIZ_DATA__ = ' + questionsJSON + ';')
+          .replace(/__ENDSCRIPT__/g, '<' + '/script>');
+      }
+
+      // ========================================================================
+      // PLANTILLA DEL HTML GENERADO (autocontenido, responsivo, con DUA)
+      // ========================================================================
+      const QUIZ_HTML_TEMPLATE = `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>__TITLE__</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\\\\(','\\\\)']], displayMath: [['$$','$$'],['\\\\[','\\\\]']], processEscapes: true },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+__ENDSCRIPT__
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script">__ENDSCRIPT__
+<style>
+:root{
+  --primary:#0c4a6e; --primary-light:#0284c7; --primary-soft:#e0f2fe;
+  --accent:#f59e0b; --accent-soft:#fef3c7;
+  --success:#16a34a; --success-soft:#dcfce7;
+  --danger:#dc2626; --danger-soft:#fee2e2;
+  --text:#0f172a; --text-soft:#475569;
+  --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0;
+  --shadow:0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 10px 25px -5px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Atkinson Hyperlegible','Lexend',system-ui,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.6;
+  padding:1rem; min-height:100vh;
+}
+.container{ max-width:780px; margin:0 auto; }
+header.quiz-header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  color:#fff; padding:2rem 1.5rem; border-radius:16px;
+  box-shadow:var(--shadow-lg); margin-bottom:1.5rem; text-align:center;
+}
+header.quiz-header h1{ font-family:'Lexend',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:.5rem; }
+header.quiz-header p{ opacity:.95; font-size:1rem; }
+.progress-bar{
+  background:var(--card); border-radius:12px; padding:1rem 1.25rem;
+  margin-bottom:1.5rem; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+}
+.progress-text{ font-weight:600; color:var(--primary); font-size:.95rem; min-width:fit-content; }
+.progress-track{ flex:1; height:10px; background:var(--border); border-radius:5px; overflow:hidden; min-width:120px; }
+.progress-fill{ height:100%; background:linear-gradient(90deg,var(--primary-light),var(--accent)); transition:width .4s ease; width:0%; }
+.score-badge{ background:var(--primary-soft); color:var(--primary); padding:.4rem .9rem; border-radius:20px; font-weight:600; font-size:.9rem; }
+.question-card{
+  background:var(--card); border-radius:16px; padding:1.5rem;
+  box-shadow:var(--shadow); margin-bottom:1.25rem;
+  border-left:5px solid var(--primary);
+}
+.question-card.answered.correct{ border-left-color:var(--success); }
+.question-card.answered.incorrect{ border-left-color:var(--danger); }
+.q-number{
+  display:inline-block; background:var(--primary); color:#fff;
+  padding:.3rem .8rem; border-radius:20px; font-size:.85rem;
+  font-weight:600; margin-bottom:.85rem;
+}
+.q-text{ font-size:1.1rem; line-height:1.55; margin-bottom:1.25rem; color:var(--text); font-weight:500; }
+.options{ display:flex; flex-direction:column; gap:.6rem; }
+.option{
+  display:flex; align-items:flex-start; gap:.75rem;
+  padding:.9rem 1rem; background:#fff; border:2px solid var(--border);
+  border-radius:10px; cursor:pointer; transition:all .2s ease;
+  font-size:1rem; line-height:1.5;
+}
+.option:hover:not(.disabled){ border-color:var(--primary-light); background:var(--primary-soft); }
+.option.selected{ border-color:var(--primary); background:var(--primary-soft); }
+.option.correct{ border-color:var(--success); background:var(--success-soft); }
+.option.incorrect{ border-color:var(--danger); background:var(--danger-soft); }
+.option.disabled{ cursor:default; }
+.option-letter{
+  flex-shrink:0; width:28px; height:28px; border-radius:50%;
+  background:var(--border); color:var(--text); font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.85rem;
+}
+.option.selected .option-letter{ background:var(--primary); color:#fff; }
+.option.correct .option-letter{ background:var(--success); color:#fff; }
+.option.incorrect .option-letter{ background:var(--danger); color:#fff; }
+.option-text{ flex:1; }
+.option-icon{ font-size:1.2rem; flex-shrink:0; }
+.feedback{
+  margin-top:1rem; padding:1rem 1.1rem; border-radius:10px;
+  font-size:.95rem; line-height:1.55; display:none;
+  border-left:4px solid;
+}
+.feedback.show{ display:block; animation:slideIn .35s ease; }
+@keyframes slideIn{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+.feedback.correct{ background:var(--success-soft); color:#14532d; border-left-color:var(--success); }
+.feedback.incorrect{ background:var(--danger-soft); color:#7f1d1d; border-left-color:var(--danger); }
+.feedback strong{ display:block; margin-bottom:.3rem; font-size:1rem; }
+.steps-box{
+  margin-top:.75rem; padding:.85rem 1rem;
+  background:var(--accent-soft); border-left:4px solid var(--accent);
+  border-radius:8px; font-size:.92rem; color:#78350f;
+}
+.steps-box strong{ display:block; margin-bottom:.3rem; color:#92400e; }
+.btn{
+  background:var(--primary); color:#fff; border:none;
+  padding:.85rem 1.5rem; border-radius:10px; font-size:1rem;
+  font-weight:600; cursor:pointer; transition:all .2s ease;
+  font-family:inherit; box-shadow:var(--shadow);
+}
+.btn:hover{ background:var(--primary-light); transform:translateY(-1px); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+.btn-secondary{ background:var(--card); color:var(--primary); border:2px solid var(--primary); }
+.btn-secondary:hover{ background:var(--primary-soft); }
+.btn-accent{ background:var(--accent); color:#fff; }
+.btn-accent:hover{ background:#d97706; }
+.actions{ display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; margin-top:1.5rem; }
+.short-answer-input{
+  width:100%; padding:.85rem 1rem; font-size:1.05rem;
+  border:2px solid var(--border); border-radius:10px;
+  font-family:inherit; transition:border-color .2s;
+  background:#fff;
+}
+.short-answer-input:focus{ outline:none; border-color:var(--primary); }
+.tf-options{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.tf-btn{
+  padding:1rem; background:#fff; border:2px solid var(--border);
+  border-radius:10px; font-size:1.05rem; font-weight:600;
+  cursor:pointer; transition:all .2s; font-family:inherit;
+}
+.tf-btn:hover:not(.disabled){ border-color:var(--primary-light); background:var(--primary-soft); }
+.tf-btn.selected{ border-color:var(--primary); background:var(--primary-soft); }
+.tf-btn.correct{ border-color:var(--success); background:var(--success-soft); color:#14532d; }
+.tf-btn.incorrect{ border-color:var(--danger); background:var(--danger-soft); color:#7f1d1d; }
+.tf-btn.disabled{ cursor:default; }
+.final-card{
+  background:var(--card); border-radius:16px; padding:2rem 1.5rem;
+  box-shadow:var(--shadow-lg); text-align:center; margin-top:1rem;
+}
+.final-score{ font-size:3rem; font-weight:700; color:var(--primary); margin:.5rem 0; line-height:1; }
+.final-fraction{ color:var(--text-soft); font-size:1.1rem; margin-bottom:1rem; }
+.final-message{ font-size:1.1rem; margin-bottom:1.25rem; color:var(--text); }
+.final-actions{ display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; }
+footer.quiz-footer{
+  text-align:center; padding:1.5rem 1rem; color:var(--text-soft);
+  font-size:.85rem; margin-top:2rem; border-top:1px solid var(--border);
+}
+@media (max-width:600px){
+  body{ padding:.6rem; }
+  header.quiz-header{ padding:1.5rem 1rem; }
+  header.quiz-header h1{ font-size:1.35rem; }
+  .question-card{ padding:1.1rem; }
+  .q-text{ font-size:1.05rem; }
+  .option{ padding:.8rem .85rem; font-size:.95rem; }
+  .tf-options{ grid-template-columns:1fr; }
+  .progress-bar{ padding:.85rem 1rem; }
+}
+@media print{
+  body{ background:#fff; }
+  .actions, .final-actions, .progress-bar{ display:none; }
+  .question-card{ box-shadow:none; border:1px solid #ccc; page-break-inside:avoid; }
+  .feedback{ display:block !important; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="quiz-header">
+    <h1>__TITLE__</h1>
+    <p>Responde cada pregunta. Recibirás feedback inmediato para aprender de los errores.</p>
+  </header>
+
+  <div class="progress-bar">
+    <div class="progress-text" id="progressText">Pregunta 0 de 0</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="score-badge" id="scoreBadge">0 aciertos</div>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="actions" id="bottomActions" style="display:none;">
+    <button class="btn btn-accent" id="finishBtn">📊 Ver resultado final</button>
+  </div>
+
+  <div id="finalResult"></div>
+
+  <footer class="quiz-footer">
+    <p>Cuestionario interactivo de GEDparaHispanos · Generado con IA</p>
+  </footer>
+</div>
+
+<script>
+/*__QUESTIONS_DATA__*/
+
+(function(){
+  const data = window.__QUIZ_DATA__ || [];
+  const container = document.getElementById('quizContainer');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+  const scoreBadge = document.getElementById('scoreBadge');
+  const finishBtn = document.getElementById('finishBtn');
+  const bottomActions = document.getElementById('bottomActions');
+  const finalResult = document.getElementById('finalResult');
+
+  const state = data.map(() => ({ answered:false, correct:false, userAnswer:null }));
+
+  function updateProgress(){
+    const answered = state.filter(s => s.answered).length;
+    const correct = state.filter(s => s.correct).length;
+    progressText.textContent = 'Respondidas: ' + answered + ' de ' + data.length;
+    progressFill.style.width = ((answered / data.length) * 100) + '%';
+    scoreBadge.textContent = correct + ' acierto' + (correct === 1 ? '' : 's');
+    if (answered === data.length) bottomActions.style.display = 'flex';
+  }
+
+  function renderQuestion(q, idx){
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = 'qcard-' + idx;
+
+    const header = '<div class="q-number">Pregunta ' + (idx + 1) + '</div>' +
+                   '<div class="q-text">' + escapeHtml(q.text) + '</div>';
+
+    let body = '';
+    if (q.type === 'multiple_choice' || q.type === 'multiple_answer'){
+      body = '<div class="options">';
+      q.options.forEach((opt, i) => {
+        const letter = String.fromCharCode(97 + i);
+        body += '<div class="option" data-qidx="' + idx + '" data-oidx="' + i + '">' +
+                '<div class="option-letter">' + letter + '</div>' +
+                '<div class="option-text">' + escapeHtml(opt.text) + '</div>' +
+                '<div class="option-icon"></div>' +
+                '</div>';
+      });
+      body += '</div>';
+      if (q.type === 'multiple_answer'){
+        body += '<button class="btn btn-secondary" style="margin-top:1rem;" data-submit-ma="' + idx + '">Confirmar respuesta</button>';
+      }
+    } else if (q.type === 'true_false'){
+      body = '<div class="tf-options">' +
+             '<button class="tf-btn" data-qidx="' + idx + '" data-tf="true">VERDADERO</button>' +
+             '<button class="tf-btn" data-qidx="' + idx + '" data-tf="false">FALSO</button>' +
+             '</div>';
+    } else if (q.type === 'short_answer'){
+      body = '<input type="text" class="short-answer-input" placeholder="Escribe tu respuesta..." data-qidx="' + idx + '" />' +
+             '<button class="btn btn-secondary" style="margin-top:.75rem;" data-submit-sa="' + idx + '">Comprobar</button>';
+    }
+
+    const feedback = '<div class="feedback" id="feedback-' + idx + '"></div>';
+    card.innerHTML = header + body + feedback;
+    container.appendChild(card);
+  }
+
+  function escapeHtml(t){
+    const d = document.createElement('div');
+    d.textContent = t == null ? '' : String(t);
+    return d.innerHTML;
+  }
+
+  // Detecta bucles de repetición tipo "..., pero si X..., pero si X..., pero si X..."
+  // y devuelve el texto truncado en el punto donde empieza la repetición.
+  function cleanFeedback(text){
+    if (!text || text.length < 100) return text;
+    var t = String(text);
+
+    // 1) Detectar frases repetidas (>= 30 caracteres) que aparezcan 3+ veces
+    var repeatedPattern = /([^.!?]{30,150}[.!?,])([\\s\\S]*?\\1){2,}/;
+    var match = t.match(repeatedPattern);
+    if (match){
+      // Cortar en la primera aparición + esa frase una vez
+      var firstIdx = t.indexOf(match[1]);
+      if (firstIdx >= 0){
+        t = t.substring(0, firstIdx + match[1].length).trim();
+      }
+    }
+
+    // 2) Detectar conectores de auto-corrección encadenados ("pero si...", "sin embargo...")
+    // Si aparece "pero" o "sin embargo" más de 3 veces, cortar antes del tercero
+    var connectors = ['pero si', 'sin embargo', 'pero el perímetro', 'pero si el', 'pero si se'];
+    for (var i = 0; i < connectors.length; i++){
+      var lower = t.toLowerCase();
+      var first = lower.indexOf(connectors[i]);
+      if (first < 0) continue;
+      var second = lower.indexOf(connectors[i], first + connectors[i].length);
+      if (second < 0) continue;
+      var third = lower.indexOf(connectors[i], second + connectors[i].length);
+      if (third >= 0){
+        // hay 3+ — cortar antes del segundo
+        t = t.substring(0, second).trim();
+        // quitar comas finales colgantes
+        t = t.replace(/[,;]\\s*$/, '.');
+        break;
+      }
+    }
+
+    // 3) Hard cap final: si después de limpiar sigue >500 chars, truncar
+    if (t.length > 500){
+      var cut = t.substring(0, 500);
+      var lastPunct = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
+      if (lastPunct > 200) t = cut.substring(0, lastPunct + 1);
+      else t = cut + '…';
+    }
+    return t;
+  }
+
+  function showFeedback(idx, isCorrect, html){
+    const fb = document.getElementById('feedback-' + idx);
+    fb.className = 'feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+    fb.innerHTML = html;
+    const card = document.getElementById('qcard-' + idx);
+    card.classList.add('answered', isCorrect ? 'correct' : 'incorrect');
+    if (data[idx].steps){
+      fb.innerHTML += '<div class="steps-box"><strong>📝 Procedimiento:</strong>' + escapeHtml(data[idx].steps) + '</div>';
+    }
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([fb]).catch(()=>{});
+  }
+
+  // ========== HANDLERS POR TIPO ==========
+  container.addEventListener('click', function(e){
+    // Opción múltiple (single)
+    const opt = e.target.closest('.option');
+    if (opt && !opt.classList.contains('disabled')){
+      const qidx = parseInt(opt.dataset.qidx);
+      const oidx = parseInt(opt.dataset.oidx);
+      const q = data[qidx];
+      if (state[qidx].answered) return;
+
+      if (q.type === 'multiple_choice'){
+        // Marcar todas las opciones definitivamente
+        const card = document.getElementById('qcard-' + qidx);
+        const allOpts = card.querySelectorAll('.option');
+        allOpts.forEach((o, i) => {
+          o.classList.add('disabled');
+          if (q.options[i].correct){
+            o.classList.add('correct');
+            o.querySelector('.option-icon').textContent = '✓';
+          } else if (i === oidx){
+            o.classList.add('incorrect');
+            o.querySelector('.option-icon').textContent = '✗';
+          }
+        });
+        const isCorrect = q.options[oidx].correct;
+        state[qidx].answered = true;
+        state[qidx].correct = isCorrect;
+        state[qidx].userAnswer = oidx;
+
+        const selectedFb = q.options[oidx].feedback || '';
+        let fbHtml;
+        if (isCorrect){
+          fbHtml = '<strong>✅ ¡Correcto!</strong>' + escapeHtml(cleanFeedback(selectedFb));
+        } else {
+          const correctIdx = q.options.findIndex(o => o.correct);
+          const correctLetter = String.fromCharCode(97 + correctIdx);
+          const correctFb = q.options[correctIdx].feedback || '';
+          fbHtml = '<strong>❌ No es correcto</strong>' +
+                   '<div style="margin-bottom:.6rem;">' + escapeHtml(cleanFeedback(selectedFb)) + '</div>' +
+                   '<div style="padding-top:.5rem; border-top:1px solid rgba(0,0,0,.1);"><em>La respuesta correcta es <strong>' + correctLetter + ')</strong>. </em>' + escapeHtml(cleanFeedback(correctFb)) + '</div>';
+        }
+        showFeedback(qidx, isCorrect, fbHtml);
+        updateProgress();
+      } else if (q.type === 'multiple_answer'){
+        // Toggle selección, esperar botón confirmar
+        opt.classList.toggle('selected');
+      }
+    }
+
+    // Confirmar multiple_answer
+    if (e.target.dataset.submitMa !== undefined){
+      const qidx = parseInt(e.target.dataset.submitMa);
+      const q = data[qidx];
+      if (state[qidx].answered) return;
+      const card = document.getElementById('qcard-' + qidx);
+      const selected = Array.from(card.querySelectorAll('.option.selected')).map(o => parseInt(o.dataset.oidx));
+      const correctIndices = q.options.map((o, i) => o.correct ? i : -1).filter(i => i !== -1);
+      const isAllCorrect = selected.length === correctIndices.length && selected.every(i => correctIndices.includes(i));
+
+      const allOpts = card.querySelectorAll('.option');
+      allOpts.forEach((o, i) => {
+        o.classList.add('disabled');
+        o.classList.remove('selected');
+        if (q.options[i].correct){
+          o.classList.add('correct');
+          o.querySelector('.option-icon').textContent = '✓';
+        } else if (selected.includes(i)){
+          o.classList.add('incorrect');
+          o.querySelector('.option-icon').textContent = '✗';
+        }
+      });
+      e.target.style.display = 'none';
+
+      state[qidx].answered = true;
+      state[qidx].correct = isAllCorrect;
+      state[qidx].userAnswer = selected;
+
+      // Construir feedback combinado
+      let fbHtml;
+      if (isAllCorrect){
+        fbHtml = '<strong>✅ ¡Perfecto! Todas las correctas elegidas.</strong>';
+        const fbs = correctIndices.map(i => '<div>• <strong>' + String.fromCharCode(97 + i) + ')</strong> ' + escapeHtml(cleanFeedback(q.options[i].feedback || '')) + '</div>').join('');
+        fbHtml += fbs;
+      } else {
+        fbHtml = '<strong>❌ No completamente correcto</strong>';
+        const correctas = correctIndices.map(i => '<div>✓ <strong>' + String.fromCharCode(97 + i) + ')</strong> ' + escapeHtml(cleanFeedback(q.options[i].feedback || '')) + '</div>').join('');
+        const erradas = selected.filter(i => !correctIndices.includes(i)).map(i => '<div>✗ <strong>' + String.fromCharCode(97 + i) + ')</strong> ' + escapeHtml(cleanFeedback(q.options[i].feedback || '')) + '</div>').join('');
+        fbHtml += '<div style="margin-top:.5rem;"><em>Correctas:</em>' + correctas + '</div>';
+        if (erradas) fbHtml += '<div style="margin-top:.5rem;"><em>Tus errores:</em>' + erradas + '</div>';
+      }
+      showFeedback(qidx, isAllCorrect, fbHtml);
+      updateProgress();
+    }
+
+    // Verdadero/Falso
+    if (e.target.dataset.tf !== undefined){
+      const qidx = parseInt(e.target.dataset.qidx);
+      const q = data[qidx];
+      if (state[qidx].answered) return;
+      const userAnswer = e.target.dataset.tf === 'true';
+      const isCorrect = userAnswer === q.correctAnswer;
+
+      const card = document.getElementById('qcard-' + qidx);
+      const btns = card.querySelectorAll('.tf-btn');
+      btns.forEach(b => {
+        b.classList.add('disabled');
+        const val = b.dataset.tf === 'true';
+        if (val === q.correctAnswer) b.classList.add('correct');
+        else if (val === userAnswer) b.classList.add('incorrect');
+      });
+
+      state[qidx].answered = true;
+      state[qidx].correct = isCorrect;
+      state[qidx].userAnswer = userAnswer;
+
+      const fb = isCorrect ? q.feedbackCorrect : q.feedbackIncorrect;
+      const fbHtml = (isCorrect ? '<strong>✅ ¡Correcto!</strong>' : '<strong>❌ No es correcto</strong>') + escapeHtml(cleanFeedback(fb || ''));
+      showFeedback(qidx, isCorrect, fbHtml);
+      updateProgress();
+    }
+
+    // Respuesta corta
+    if (e.target.dataset.submitSa !== undefined){
+      const qidx = parseInt(e.target.dataset.submitSa);
+      const q = data[qidx];
+      if (state[qidx].answered) return;
+      const card = document.getElementById('qcard-' + qidx);
+      const inputEl = card.querySelector('.short-answer-input');
+      const userAnswer = inputEl.value.trim();
+      if (!userAnswer){ alert('Escribe una respuesta'); return; }
+
+      // Comparación tolerante: normalizar espacios, comas/puntos decimales
+      const normalize = s => String(s).toLowerCase().replace(/\\s+/g,'').replace(/,/g,'.');
+      const isCorrect = normalize(userAnswer) === normalize(q.correctAnswer);
+
+      inputEl.disabled = true;
+      inputEl.style.borderColor = isCorrect ? 'var(--success)' : 'var(--danger)';
+      inputEl.style.background = isCorrect ? 'var(--success-soft)' : 'var(--danger-soft)';
+      e.target.style.display = 'none';
+
+      state[qidx].answered = true;
+      state[qidx].correct = isCorrect;
+      state[qidx].userAnswer = userAnswer;
+
+      let fbHtml;
+      if (isCorrect){
+        fbHtml = '<strong>✅ ¡Correcto!</strong>' + escapeHtml(cleanFeedback(q.feedbackCorrect || ''));
+      } else {
+        fbHtml = '<strong>❌ No es correcto</strong>' +
+                 '<div>La respuesta correcta es: <strong>' + escapeHtml(q.correctAnswer) + '</strong></div>' +
+                 '<div style="margin-top:.4rem;">' + escapeHtml(cleanFeedback(q.feedbackIncorrect || '')) + '</div>';
+      }
+      showFeedback(qidx, isCorrect, fbHtml);
+      updateProgress();
+    }
+  });
+
+  // Renderizar todas las preguntas
+  data.forEach((q, idx) => renderQuestion(q, idx));
+  updateProgress();
+
+  // Resultado final
+  finishBtn.addEventListener('click', function(){
+    const correct = state.filter(s => s.correct).length;
+    const total = data.length;
+    const pct = Math.round((correct / total) * 100);
+    let msg, emoji;
+    if (pct >= 90){ msg = '¡Excelente trabajo!'; emoji = '🏆'; }
+    else if (pct >= 70){ msg = '¡Muy bien!'; emoji = '🎉'; }
+    else if (pct >= 50){ msg = 'Buen esfuerzo. Repasa los errores y vuelve a intentarlo.'; emoji = '💪'; }
+    else { msg = 'Sigue practicando — cada error es un paso hacia el dominio.'; emoji = '📚'; }
+
+    finalResult.innerHTML =
+      '<div class="final-card">' +
+      '<div style="font-size:3rem;">' + emoji + '</div>' +
+      '<div class="final-score">' + pct + '%</div>' +
+      '<div class="final-fraction">' + correct + ' de ' + total + ' correctas</div>' +
+      '<div class="final-message">' + msg + '</div>' +
+      '<div class="final-actions">' +
+      '<button class="btn btn-secondary" onclick="window.location.reload()">🔄 Reintentar todo</button>' +
+      '<button class="btn btn-accent" onclick="window.print()">🖨️ Imprimir resultados</button>' +
+      '</div></div>';
+    finalResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    bottomActions.style.display = 'none';
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([finalResult]).catch(()=>{});
+  });
+
+  // Tipear matemáticas en el render inicial
+  if (window.MathJax && MathJax.typesetPromise){
+    setTimeout(() => MathJax.typesetPromise([container]).catch(()=>{}), 100);
+  }
+})();
+__ENDSCRIPT__
+</body>
+</html>`;
+    </script>
+  </body>
+</html>
 
