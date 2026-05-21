@@ -7,9 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-    <!-- MathJax para vista previa -->
+    <!-- MathJax para vista previa y renderizado en la interfaz principal -->
     <script>
-      MathJax = {
+      window.MathJax = {
         tex: {
           inlineMath: [
             ['$', '$'],
@@ -21,10 +21,17 @@
           ],
           processEscapes: true
         },
-        options: {skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']}
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        },
+        startup: {
+          pageReady: () => {
+            return MathJax.startup.defaultPageReady();
+          }
+        }
       };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
 
     <style>
       * {
@@ -68,6 +75,16 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+      }
+
+      /* Reglas para optimizar contenedores de MathJax */
+      mjx-container {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      mjx-container[jax="CHTML"][display="true"] {
+        margin: 0.5rem 0 !important;
       }
 
       .header {
@@ -1259,17 +1276,6 @@
       // ========================================================================
       // PARSEO DE PREGUNTAS (con FEEDBACK por opción)
       // ========================================================================
-      // Formato esperado de la IA:
-      // 1. [Pregunta]
-      // *a) Correcta || FB: Explicación de por qué es correcta
-      // b) Incorrecta || FB: Explicación del error común que produce esta respuesta
-      // c) Incorrecta || FB: ...
-      // d) Incorrecta || FB: ...
-      // Pasos: [si está activado]
-      //
-      // Para true_false: "(VERDADERO) || FB_VERDADERO: ... || FB_FALSO: ..."
-      // Para short_answer: "blank 1. [pregunta] || RESPUESTA: 42 || FB_ACIERTO: ... || FB_ERROR: ..."
-
       function parseGeneratedQuestions(aiResponse, questionType) {
         const questions = [];
         const lines = aiResponse
@@ -1279,18 +1285,15 @@
         let currentQuestion = null;
         let questionNumber = 0;
 
-        // Limpia bucles de repetición en el texto del feedback antes de guardarlo.
         function cleanLoopedText(text) {
           if (!text || text.length < 100) return text;
           let t = String(text);
-          // 1) Frases repetidas (>=30 chars) que aparecen 3+ veces
           const repeatedPattern = /([^.!?]{30,150}[.!?,])([\s\S]*?\1){2,}/;
           const m = t.match(repeatedPattern);
           if (m) {
             const firstIdx = t.indexOf(m[1]);
             if (firstIdx >= 0) t = t.substring(0, firstIdx + m[1].length).trim();
           }
-          // 2) Conectores encadenados ("pero si", "sin embargo")
           const connectors = ['pero si', 'sin embargo', 'pero el perímetro', 'pero si el', 'pero si se'];
           for (const c of connectors) {
             const lower = t.toLowerCase();
@@ -1307,7 +1310,6 @@
               break;
             }
           }
-          // 3) Hard cap
           if (t.length > 500) {
             const cut = t.substring(0, 500);
             const lastPunct = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
@@ -1317,12 +1319,10 @@
         }
 
         function splitFeedback(line) {
-          // Separa "texto || FB: feedback" en {text, feedback}
           const idx = line.indexOf('||');
           if (idx === -1) return {text: line, feedback: ''};
           const text = line.substring(0, idx).trim();
           const rest = line.substring(idx + 2).trim();
-          // Quitar prefijo "FB:" o "FB_X:"
           const feedback = rest.replace(/^FB[_A-Z]*:\s*/i, '').trim();
           return {text: text, feedback: cleanLoopedText(feedback)};
         }
@@ -1330,7 +1330,6 @@
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
 
-          // ¿Es inicio de nueva pregunta?
           if (/^\d+\./.test(line) || /^(blank)\s+\d+\./i.test(line)) {
             if (currentQuestion) questions.push(currentQuestion);
             questionNumber++;
@@ -1348,7 +1347,6 @@
               steps: ''
             };
           } else if (currentQuestion) {
-            // Líneas dentro de una pregunta
             if (questionType === 'multiple_choice' || questionType === 'multiple_answer') {
               if (/^\*?[a-d][\).]/.test(line.toLowerCase())) {
                 const isCorrect = line.startsWith('*');
@@ -1363,7 +1361,6 @@
                 currentQuestion.steps = cleanLoopedText(line.replace(/^pasos?\s*:\s*/i, '').trim());
               }
             } else if (questionType === 'true_false') {
-              // Línea esperada: "(VERDADERO) || FB_VERDADERO: ... || FB_FALSO: ..."
               const partes = line.split('||').map(p => p.trim());
               if (partes.length >= 1) {
                 const match = partes[0].match(/\((VERDADERO|FALSO)\)/i);
@@ -1396,7 +1393,6 @@
         }
         if (currentQuestion) questions.push(currentQuestion);
 
-        // Validar y completar
         questions.forEach(q => {
           if (q.type === 'multiple_choice') {
             const hasCorrect = q.options.some(opt => opt.correct);
@@ -1448,9 +1444,6 @@
           experto: 'NIVEL EXPERTO: combina múltiples conceptos, razonamiento avanzado'
         };
 
-        // ====================================================================
-        // FORMATOS CON FEEDBACK POR OPCIÓN
-        // ====================================================================
         const questionTypeInstructions = {
           multiple_choice: {
             format:
@@ -1502,7 +1495,7 @@
           problemas:
             '- Situaciones reales que requieran razonamiento.\n- Distractores basados en errores comunes de interpretación.\n- Variedad de contextos (compras, trabajo, medidas, tiempo, dinero).\n- Números realistas.\n',
           calculo:
-            '- Expresiones matemáticas directas SIN contexto narrativo.\n- Ejemplos: "Resuelve: 3x + 7 = 22", "Simplifica: 2/3 + 5/6", "Calcula: 15% de 240".\n- Distractores = errores de cálculo comunes.\n- Variedad de operaciones.\n',
+            '- Expresiones matemáticas directas SIN contexto narrativo.\n- Ejemplos: "Resuelve: $3x + 7 = 22$", "Simplifica: $\\frac{2}{3} + \\frac{5}{6}$", "Calcula: $15\\%$ de $240$".\n- Distractores = errores de cálculo comunes.\n- Variedad de operaciones.\n',
           conceptual: '- Pregunta sobre PROPIEDADES y DEFINICIONES.\n- Evalúa COMPRENSIÓN, no solo cálculo.\n- Distractores = conceptos erróneos comunes.\n',
           datos: '- Describe una tabla o gráfica y pregunta sobre ella.\n- Interpretar tendencias, calcular promedios, comparar datos.\n- Distractores = interpretaciones incorrectas comunes.\n'
         };
@@ -1510,9 +1503,9 @@
         const systemPrompt =
           'Eres un experto profesor de matemáticas para adultos hispanohablantes que estudian el GED. ' +
           'Generas preguntas con FEEDBACK ESPECÍFICO para cada opción: para la correcta explicas brevemente el razonamiento clave en UNA SOLA ORACIÓN; para cada distractor identificas el ERROR REAL que produciría ese resultado (un error de cálculo, una confusión conceptual, un paso saltado) en UNA SOLA ORACIÓN. ' +
-          'REGLA INVIOLABLE: cada feedback debe tener MÁXIMO 2 oraciones (30 palabras máximo). NUNCA repitas frases. NUNCA digas "pero si se considera que..." varias veces. NUNCA entres en bucles de auto-corrección. Si te equivocaste en un cálculo, simplemente corrige y sigue, no repitas. ' +
-          'Nunca usas feedback genérico como "esto es incorrecto" — siempre explicas el error específico, pero en forma BREVE. ' +
-          'Usas notación matemática estándar: x^2, sqrt(), 3/4, π. ' +
+          'REGLA INVIOLABLE DE RETROALIMENTACIÓN: cada feedback debe tener MÁXIMO 2 oraciones (30 palabras máximo). NUNCA repitas frases. NUNCA entres en bucles de auto-corrección. ' +
+          'NUNCA uses feedback genérico como "esto es incorrecto" — siempre explicas el error específico, pero en forma BREVE. ' +
+          'REGLA OBLIGATORIA DE FORMATO DE MATEMÁTICAS: DEBES envolver absolutamente todas las variables, términos algebraicos, polinomios, ecuaciones, fracciones, exponentes, raíces y símbolos matemáticos en delimitadores de línea usando un signo de dólar simple ($), por ejemplo: $2x^2 + 3x - 1$, $x$, $\\sqrt{y}$, $\\frac{a}{b}$, $\\pi$. No dejes nunca expresiones matemáticas fuera de los signos de dólar, ya que de lo contrario no podrán renderizarse visualmente. ' +
           'SIEMPRE sigues el formato exacto solicitado con el separador " || FB: ".';
 
         const userPrompt =
@@ -1544,10 +1537,10 @@
           'REGLAS CRÍTICAS:\n' +
           typeInstructions.rules +
           '\n\n' +
-          '⛔ REGLA ANTI-REPETICIÓN: Cada feedback debe ser una sola oración breve (máximo 25-30 palabras). PROHIBIDO repetir la misma idea con frases como "pero si se considera...", "sin embargo...", "también podríamos decir...". Si el feedback queda largo, RECÓRTALO. La claridad vale más que la extensión.\n\n' +
+          '⛔ REGLA ANTI-REPETICIÓN: Cada feedback debe ser una sola oración breve (máximo 25-30 palabras). PROHIBIDO repetir la misma idea. Si el feedback queda largo, RECÓRTALO.\n\n' +
           'INSTRUCCIONES ESPECÍFICAS PARA ESTE ENFOQUE:\n' +
           focusSpecificInstructions[questionFocus] +
-          '- Notación matemática: x^2, sqrt(), fracciones como 3/4\n' +
+          '- REGLA DE RENDIMIENTO MATEMÁTICO: En el texto de las preguntas, opciones de respuesta, feedback y pasos, escribe CUALQUIER elemento matemático (números aislados no, pero sí variables, potencias, polinomios, fracciones, etc.) rodeado de signos de dólar, por ejemplo: escribirá siempre $2x^2 + 3x - 1$ en lugar de 2x^2+3x-1. Escribe $\\frac{1}{2}$ en lugar de 1/2.\n' +
           '- VERIFICA que cada opción tenga su feedback con " || FB: "\n' +
           '- El feedback debe ser PEDAGÓGICO y ESPECÍFICO\n' +
           '- TODAS las preguntas del MISMO tema arriba\n\n' +
@@ -1606,6 +1599,7 @@
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+        // Renderizado dinámico de MathJax
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
           MathJax.typesetPromise([messageDiv]).catch(err => console.log('MathJax error:', err));
         }
@@ -1768,7 +1762,7 @@
       }
 
       // ========================================================================
-      // CONSTRUCTOR DEL HTML AUTOCONTENIDO (es el corazón del generador)
+      // CONSTRUCTOR DEL HTML AUTOCONTENIDO
       // ========================================================================
       function buildQuizHTML() {
         if (generatedQuestions.length === 0) return '';
@@ -1791,12 +1785,18 @@
 <title>__TITLE__</title>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script>
-MathJax = {
-  tex: { inlineMath: [['$','$'],['\\\\(','\\\\)']], displayMath: [['$$','$$'],['\\\\[','\\\\]']], processEscapes: true },
-  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+window.MathJax = {
+  tex: { 
+    inlineMath: [['$','$'],['\\\\(','\\\\)']], 
+    displayMath: [['$$','$$'],['\\\\[','\\\\]']], 
+    processEscapes: true 
+  },
+  options: { 
+    skipHtmlTags: ['script','noscript','style','textarea','pre'] 
+  }
 };
 __ENDSCRIPT__
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script">__ENDSCRIPT__
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async>__ENDSCRIPT__
 <style>
 :root{
   --primary:#0c4a6e; --primary-light:#0284c7; --primary-soft:#e0f2fe;
@@ -1813,6 +1813,14 @@ body{
   font-family:'Atkinson Hyperlegible','Lexend',system-ui,sans-serif;
   background:var(--bg); color:var(--text); line-height:1.6;
   padding:1rem; min-height:100vh;
+}
+mjx-container {
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+}
+mjx-container[jax="CHTML"][display="true"] {
+  margin:.5rem 0 !important;
 }
 .container{ max-width:780px; margin:0 auto; }
 header.quiz-header{
@@ -2038,25 +2046,19 @@ footer.quiz-footer{
     return d.innerHTML;
   }
 
-  // Detecta bucles de repetición tipo "..., pero si X..., pero si X..., pero si X..."
-  // y devuelve el texto truncado en el punto donde empieza la repetición.
   function cleanFeedback(text){
     if (!text || text.length < 100) return text;
     var t = String(text);
 
-    // 1) Detectar frases repetidas (>= 30 caracteres) que aparezcan 3+ veces
     var repeatedPattern = /([^.!?]{30,150}[.!?,])([\\s\\S]*?\\1){2,}/;
     var match = t.match(repeatedPattern);
     if (match){
-      // Cortar en la primera aparición + esa frase una vez
       var firstIdx = t.indexOf(match[1]);
       if (firstIdx >= 0){
         t = t.substring(0, firstIdx + match[1].length).trim();
       }
     }
 
-    // 2) Detectar conectores de auto-corrección encadenados ("pero si...", "sin embargo...")
-    // Si aparece "pero" o "sin embargo" más de 3 veces, cortar antes del tercero
     var connectors = ['pero si', 'sin embargo', 'pero el perímetro', 'pero si el', 'pero si se'];
     for (var i = 0; i < connectors.length; i++){
       var lower = t.toLowerCase();
@@ -2066,15 +2068,12 @@ footer.quiz-footer{
       if (second < 0) continue;
       var third = lower.indexOf(connectors[i], second + connectors[i].length);
       if (third >= 0){
-        // hay 3+ — cortar antes del segundo
         t = t.substring(0, second).trim();
-        // quitar comas finales colgantes
         t = t.replace(/[,;]\\s*$/, '.');
         break;
       }
     }
 
-    // 3) Hard cap final: si después de limpiar sigue >500 chars, truncar
     if (t.length > 500){
       var cut = t.substring(0, 500);
       var lastPunct = Math.max(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'));
@@ -2082,6 +2081,12 @@ footer.quiz-footer{
       else t = cut + '…';
     }
     return t;
+  }
+
+  function triggerMathTypeset(elements){
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise(elements).catch(function(err){ console.log('MathJax typeset error:', err); });
+    }
   }
 
   function showFeedback(idx, isCorrect, html){
@@ -2093,12 +2098,11 @@ footer.quiz-footer{
     if (data[idx].steps){
       fb.innerHTML += '<div class="steps-box"><strong>📝 Procedimiento:</strong>' + escapeHtml(data[idx].steps) + '</div>';
     }
-    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([fb]).catch(()=>{});
+    triggerMathTypeset([fb]);
   }
 
   // ========== HANDLERS POR TIPO ==========
   container.addEventListener('click', function(e){
-    // Opción múltiple (single)
     const opt = e.target.closest('.option');
     if (opt && !opt.classList.contains('disabled')){
       const qidx = parseInt(opt.dataset.qidx);
@@ -2107,7 +2111,6 @@ footer.quiz-footer{
       if (state[qidx].answered) return;
 
       if (q.type === 'multiple_choice'){
-        // Marcar todas las opciones definitivamente
         const card = document.getElementById('qcard-' + qidx);
         const allOpts = card.querySelectorAll('.option');
         allOpts.forEach((o, i) => {
@@ -2140,12 +2143,10 @@ footer.quiz-footer{
         showFeedback(qidx, isCorrect, fbHtml);
         updateProgress();
       } else if (q.type === 'multiple_answer'){
-        // Toggle selección, esperar botón confirmar
         opt.classList.toggle('selected');
       }
     }
 
-    // Confirmar multiple_answer
     if (e.target.dataset.submitMa !== undefined){
       const qidx = parseInt(e.target.dataset.submitMa);
       const q = data[qidx];
@@ -2173,7 +2174,6 @@ footer.quiz-footer{
       state[qidx].correct = isAllCorrect;
       state[qidx].userAnswer = selected;
 
-      // Construir feedback combinado
       let fbHtml;
       if (isAllCorrect){
         fbHtml = '<strong>✅ ¡Perfecto! Todas las correctas elegidas.</strong>';
@@ -2190,7 +2190,6 @@ footer.quiz-footer{
       updateProgress();
     }
 
-    // Verdadero/Falso
     if (e.target.dataset.tf !== undefined){
       const qidx = parseInt(e.target.dataset.qidx);
       const q = data[qidx];
@@ -2217,7 +2216,6 @@ footer.quiz-footer{
       updateProgress();
     }
 
-    // Respuesta corta
     if (e.target.dataset.submitSa !== undefined){
       const qidx = parseInt(e.target.dataset.submitSa);
       const q = data[qidx];
@@ -2227,7 +2225,6 @@ footer.quiz-footer{
       const userAnswer = inputEl.value.trim();
       if (!userAnswer){ alert('Escribe una respuesta'); return; }
 
-      // Comparación tolerante: normalizar espacios, comas/puntos decimales
       const normalize = s => String(s).toLowerCase().replace(/\\s+/g,'').replace(/,/g,'.');
       const isCorrect = normalize(userAnswer) === normalize(q.correctAnswer);
 
@@ -2253,11 +2250,9 @@ footer.quiz-footer{
     }
   });
 
-  // Renderizar todas las preguntas
   data.forEach((q, idx) => renderQuestion(q, idx));
   updateProgress();
 
-  // Resultado final
   finishBtn.addEventListener('click', function(){
     const correct = state.filter(s => s.correct).length;
     const total = data.length;
@@ -2280,12 +2275,11 @@ footer.quiz-footer{
       '</div></div>';
     finalResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
     bottomActions.style.display = 'none';
-    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([finalResult]).catch(()=>{});
+    triggerMathTypeset([finalResult]);
   });
 
-  // Tipear matemáticas en el render inicial
-  if (window.MathJax && MathJax.typesetPromise){
-    setTimeout(() => MathJax.typesetPromise([container]).catch(()=>{}), 100);
+  if (data.length > 0) {
+    triggerMathTypeset([container]);
   }
 })();
 __ENDSCRIPT__
@@ -2294,4 +2288,3 @@ __ENDSCRIPT__
     </script>
   </body>
 </html>
-
