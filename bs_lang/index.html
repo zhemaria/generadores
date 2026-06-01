@@ -1008,6 +1008,34 @@
           </p>
         </div>
 
+        <div class="help-section literary-highlight">
+          <h3>🔗 Emparejamiento (matching)</h3>
+          <p>
+            Útil para
+            <strong>mayúscula → minúscula</strong>
+            , sinónimos, antónimos, palabra → categoría gramatical, etc.
+          </p>
+          <p>
+            <strong>• Modalidad MC (opción múltiple):</strong>
+            cada par se convierte en una pregunta con 4 opciones. Ideal para celular y estudiantes que prefieren no teclear.
+          </p>
+          <p>
+            <strong>• Modalidad MA (respuesta corta múltiple):</strong>
+            una pregunta agrupa 4-8 pares; el estudiante escribe cada respuesta. Más fiel al concepto de "matching" tradicional.
+          </p>
+          <p>
+            Brightspace D2L no soporta el tipo "Matching" nativo en CSV v4.0, así que se simula con
+            <strong>MC</strong>
+            o
+            <strong>MA</strong>
+            (Multi-Short Answer). Selecciona un
+            <strong>dominio</strong>
+            predefinido o usa
+            <strong>Personalizado</strong>
+            para describirlo en el chat.
+          </p>
+        </div>
+
         <div class="help-section">
           <h3>📖 Sobre Comprensión Lectora</h3>
           <p>Cuando seleccionas "Comprensión lectora", el sistema:</p>
@@ -1023,6 +1051,31 @@
           </p>
           <p>3. Incluye preguntas sobre idea principal, detalles, vocabulario e inferencias</p>
         </div>
+
+        <div class="help-section literary-highlight">
+          <h3>🔗 Sobre Emparejamiento (MC simulado)</h3>
+          <p>
+            Brightspace D2L
+            <strong>no soporta matching nativo</strong>
+            vía CSV, así que este modo lo simula como una serie de preguntas de opción múltiple — una por cada par.
+          </p>
+          <p>
+            <strong>Dominios disponibles:</strong>
+            mayúscula→minúscula, minúscula→mayúscula, sinónimos, antónimos, singular→plural, masculino→femenino, verbo conjugado→infinitivo, palabra→categoría gramatical, palabra→tipo de acentuación, y personalizado.
+          </p>
+          <p>
+            <strong>Funcionamiento:</strong>
+            cada pregunta presenta un elemento (ej. "A") y 4 opciones donde solo una es la pareja correcta (ej. *a) a). Ideal para estudiantes adultos en celular que no quieren teclear.
+          </p>
+          <p>
+            <strong>Tip:</strong>
+            cambia el "Identificador" a algo como
+            <code>EMPAR</code>
+            o
+            <code>MATCH</code>
+            para distinguirlas en tu banco de preguntas.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -1036,8 +1089,8 @@
 
         <div class="config-grid">
           <div class="control-group">
-            <label>Identificador de Preguntas</label>
-            <input type="text" id="questionName" value="LANG" placeholder="Ej: LANG, LECT, GRAM" />
+            <label>Identificador de Preguntas (opcional)</label>
+            <input type="text" id="questionName" value="" placeholder="Opcional — ej: LANG, LECT, GRAM" />
           </div>
 
           <div class="control-group">
@@ -1047,6 +1100,31 @@
               <option value="multiple_answer">Respuesta múltiple (varias correctas)</option>
               <option value="true_false">Verdadero/Falso</option>
               <option value="short_answer">Respuesta corta</option>
+              <option value="matching">Emparejamiento (mayús→minús, sinónimos, etc.)</option>
+            </select>
+          </div>
+
+          <div class="control-group" id="matchingModeGroup" style="display: none;">
+            <label>Modalidad de Emparejamiento</label>
+            <select id="matchingMode">
+              <option value="mc" selected>Opción múltiple (un par por pregunta)</option>
+              <option value="ma">Respuesta corta múltiple (varios pares en una)</option>
+            </select>
+          </div>
+
+          <div class="control-group" id="matchingDomainGroup" style="display: none;">
+            <label>Dominio de Emparejamiento</label>
+            <select id="matchingDomain">
+              <option value="mayus_minus" selected>Mayúscula → minúscula</option>
+              <option value="minus_mayus">Minúscula → mayúscula</option>
+              <option value="sinonimos">Palabra → sinónimo</option>
+              <option value="antonimos">Palabra → antónimo</option>
+              <option value="singular_plural">Singular → plural</option>
+              <option value="masc_fem">Masculino → femenino</option>
+              <option value="verbo_infinitivo">Verbo conjugado → infinitivo</option>
+              <option value="palabra_categoria">Palabra → categoría gramatical</option>
+              <option value="acento_tipo">Palabra → tipo de acentuación</option>
+              <option value="personalizado">Personalizado (describir en el chat)</option>
             </select>
           </div>
 
@@ -1353,27 +1431,32 @@
       }
 
       // Parse questions
-      function parseGeneratedQuestions(aiResponse, questionType) {
+      function parseGeneratedQuestions(aiResponse, questionType, matchingMode) {
         const questions = [];
         const lines = aiResponse.split('\n').filter(line => line.trim());
         let currentQuestion = null;
         let questionNumber = 0;
 
+        // Determinar si es modalidad MA (multi-pares en una pregunta)
+        const isMatchingMA = questionType === 'matching' && matchingMode === 'ma';
+
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i].trim();
 
-          if (/^\d+\./.test(line) || /^(blank)\s+\d+\./i.test(line)) {
+          // Detectar inicio de pregunta: "1.", "blank 1.", o "match 1."
+          if (/^\d+\./.test(line) || /^(blank|match)\s+\d+\./i.test(line)) {
             if (currentQuestion) questions.push(currentQuestion);
             questionNumber++;
 
-            const questionName = document.getElementById('questionName').value || 'LANG';
-            let questionText = line.replace(/^(blank)?\s*\d+\.\s*/i, '').trim();
+            const questionName = document.getElementById('questionName').value.trim();
+            let questionText = line.replace(/^(blank|match)?\s*\d+\.\s*/i, '').trim();
 
             currentQuestion = {
-              id: questionName + '_' + questionNumber,
+              id: questionName ? (questionName + '_' + questionNumber) : '',
               text: questionText,
-              type: questionType,
+              type: isMatchingMA ? 'matching_ma' : questionType,
               options: [],
+              pairs: [],
               hint: null
             };
           } else if (line.toLowerCase().startsWith('hint:') && currentQuestion) {
@@ -1382,11 +1465,46 @@
             // Ignorar líneas de encabezado de pasaje
             continue;
           } else if (currentQuestion) {
-            if (questionType === 'multiple_choice' || questionType === 'multiple_answer') {
+            // Modalidad matching_ma: detectar pares "IZQUIERDA = DERECHA"
+            // (descartar líneas que también encajan en formato de opción a-d)
+            if (isMatchingMA && /^[^=]+=\s*.+$/.test(line) && !/^\*?[a-d][\).]/.test(line.toLowerCase())) {
+              const eqIdx = line.indexOf('=');
+              const left = line.substring(0, eqIdx).trim();
+              const right = line.substring(eqIdx + 1).trim();
+              if (left && right) {
+                currentQuestion.pairs.push({left: left, right: right});
+              }
+            } else if (questionType === 'multiple_choice' || questionType === 'multiple_answer' || (questionType === 'matching' && !isMatchingMA)) {
               if (/^\*?[a-d][\).]/.test(line.toLowerCase())) {
-                const isCorrect = line.trim().startsWith('*');
-                const optionText = line.replace(/^\*?\s*[a-d][\).]\s*/i, '').trim();
-                currentQuestion.options.push({text: optionText, correct: isCorrect});
+                // Detectar si la línea contiene MÚLTIPLES opciones inline
+                // (ej: "*a) k   b) e   c) o   d) u" en una sola línea)
+                const positions = [0]; // siempre hay una opción al inicio
+                const innerRegex = /\s{2,}(\*?[a-d][\).])/gi;
+                let m;
+                while ((m = innerRegex.exec(line)) !== null) {
+                  positions.push(m.index + m[0].length - m[1].length);
+                }
+
+                if (positions.length > 1) {
+                  // Múltiples opciones inline → separarlas usando las posiciones
+                  for (let p = 0; p < positions.length; p++) {
+                    const startPos = positions[p];
+                    const endPos = p + 1 < positions.length ? positions[p + 1] : line.length;
+                    const opt = line.substring(startPos, endPos).trim();
+                    if (/^\*?[a-d][\).]/.test(opt.toLowerCase())) {
+                      const isCorrect = opt.startsWith('*');
+                      const optionText = opt.replace(/^\*?\s*[a-d][\).]\s*/i, '').trim();
+                      if (optionText) {
+                        currentQuestion.options.push({text: optionText, correct: isCorrect});
+                      }
+                    }
+                  }
+                } else {
+                  // Caso normal: una opción por línea
+                  const isCorrect = line.trim().startsWith('*');
+                  const optionText = line.replace(/^\*?\s*[a-d][\).]\s*/i, '').trim();
+                  currentQuestion.options.push({text: optionText, correct: isCorrect});
+                }
               }
             } else if (questionType === 'true_false') {
               const match = line.match(/\((VERDADERO|FALSO)\)/i);
@@ -1401,10 +1519,11 @@
 
         if (currentQuestion) questions.push(currentQuestion);
 
-        // Validar opciones
+        // Validar opciones y filtrar preguntas incompletas
+        const validQuestions = [];
         questions.forEach(q => {
-          if (q.type === 'multiple_choice' || q.type === 'multiple_answer') {
-            if (q.type === 'multiple_choice') {
+          if (q.type === 'multiple_choice' || q.type === 'multiple_answer' || q.type === 'matching') {
+            if (q.type === 'multiple_choice' || q.type === 'matching') {
               const hasCorrect = q.options.some(opt => opt.correct);
               if (!hasCorrect && q.options.length > 0) q.options[0].correct = true;
             }
@@ -1412,10 +1531,18 @@
               q.options.push({text: 'Opción ' + (q.options.length + 1), correct: false});
             }
             if (q.options.length > 4) q.options = q.options.slice(0, 4);
+            validQuestions.push(q);
+          } else if (q.type === 'matching_ma') {
+            // Solo incluir si tiene al menos 2 pares válidos
+            if (q.pairs.length >= 2) {
+              validQuestions.push(q);
+            }
+          } else {
+            validQuestions.push(q);
           }
         });
 
-        return questions;
+        return validQuestions;
       }
 
       // Generate CSV
@@ -1434,11 +1561,26 @@
           if (question.type === 'multiple_answer') qType = 'MS';
           else if (question.type === 'true_false') qType = 'TF';
           else if (question.type === 'short_answer') qType = 'SA';
+          else if (question.type === 'matching') qType = 'MC';
+          else if (question.type === 'matching_ma') qType = 'MA';
 
           csv += 'NewQuestion,' + qType + ',,,\n';
-          csv += 'ID,' + escapeCSV(question.id) + ',,,\n';
-          csv += 'Title,' + escapeCSV(question.id) + ',,,\n';
-          csv += 'QuestionText,' + escapeCSV(question.text) + ',,,\n';
+          if (question.id) {
+            csv += 'ID,' + escapeCSV(question.id) + ',,,\n';
+          }
+          // Sin línea "Title": así Brightspace muestra el TEXTO de la pregunta
+          // en la lista del cuestionario, no una descripción corta (el id o un número).
+
+          // Para matching_ma: construir texto de pregunta que liste los elementos izquierdos
+          if (question.type === 'matching_ma') {
+            let qText = question.text || 'Empareja cada elemento con su correspondencia';
+            qText += ' — Elementos: ';
+            qText += question.pairs.map(p => p.left).join(' • ');
+            csv += 'QuestionText,' + escapeCSV(qText) + ',,,\n';
+          } else {
+            csv += 'QuestionText,' + escapeCSV(question.text) + ',,,\n';
+          }
+
           csv += 'Points,1,,,\n';
           csv += 'Difficulty,1,,,\n';
 
@@ -1446,7 +1588,7 @@
             csv += 'Hint,' + escapeCSV(question.hint) + ',,,\n';
           }
 
-          if (question.type === 'multiple_choice' || question.type === 'multiple_answer') {
+          if (question.type === 'multiple_choice' || question.type === 'multiple_answer' || question.type === 'matching') {
             question.options.forEach(option => {
               const points = option.correct ? '100' : '0';
               csv += 'Option,' + points + ',' + escapeCSV(option.text) + ',,\n';
@@ -1458,6 +1600,17 @@
             csv += incorrectValue + ',0,,,\n';
           } else if (question.type === 'short_answer') {
             csv += 'Answer,100,' + escapeCSV(question.correctAnswer) + ',,\n';
+          } else if (question.type === 'matching_ma') {
+            // MA: una fila Answer por cada par, distribuyendo puntos equitativamente
+            // Brightspace MA acepta múltiples respuestas correctas separadas
+            const pointsPerPair = Math.floor(100 / question.pairs.length);
+            question.pairs.forEach(pair => {
+              // Variante 1: "IZQUIERDA → DERECHA" (formato explícito)
+              const answerText = pair.left + ' → ' + pair.right;
+              csv += 'Answer,' + pointsPerPair + ',' + escapeCSV(answerText) + ',,\n';
+              // Variante 2: solo la derecha (por si el estudiante escribe solo la respuesta)
+              csv += 'Answer,' + pointsPerPair + ',' + escapeCSV(pair.right) + ',,\n';
+            });
           }
 
           csv += 'Feedback,,,,\n';
@@ -1515,6 +1668,19 @@
 
       downloadBtn.addEventListener('click', downloadCSV);
       clearBtn.addEventListener('click', clearAll);
+
+      // Mostrar/ocultar dropdowns de Emparejamiento según tipo de pregunta seleccionado
+      const questionTypeSelect = document.getElementById('questionType');
+      const matchingModeGroup = document.getElementById('matchingModeGroup');
+      const matchingDomainGroup = document.getElementById('matchingDomainGroup');
+      function toggleMatchingControls() {
+        const showMatching = questionTypeSelect.value === 'matching';
+        matchingModeGroup.style.display = showMatching ? 'flex' : 'none';
+        matchingDomainGroup.style.display = showMatching ? 'flex' : 'none';
+      }
+      questionTypeSelect.addEventListener('change', toggleMatchingControls);
+      toggleMatchingControls(); // Estado inicial
+
       input.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
@@ -1526,6 +1692,8 @@
       async function sendMessage() {
         const message = input.value.trim();
         const questionType = document.getElementById('questionType').value;
+        const matchingMode = document.getElementById('matchingMode').value;
+        const matchingDomain = document.getElementById('matchingDomain').value;
         const questionCount = parseInt(document.getElementById('questionCount').value) || 10;
         const langArea = document.getElementById('langArea').value;
         const textType = document.getElementById('textType').value;
@@ -1570,7 +1738,7 @@
         input.value = '';
 
         try {
-          const aiResponse = await generateLangResponse(questionType, questionCount, sourceContent, langArea, textType, difficultyLevel, includeHints, includePassage, contextClues);
+          const aiResponse = await generateLangResponse(questionType, questionCount, sourceContent, langArea, textType, difficultyLevel, includeHints, includePassage, contextClues, matchingDomain);
 
           addMessage(aiResponse, 'ai');
 
@@ -1579,7 +1747,23 @@
             .replace(/\\n([a-d][\).])/gi, '\n$1')
             .replace(/\\n/g, '\n');
 
-          const questions = parseGeneratedQuestions(processedResponse, questionType);
+          // Normalizar opciones inline a formato vertical
+          // Si una línea tiene varias "a) ... b) ... c) ... d) ..." en horizontal,
+          // las separamos en líneas independientes. Reemplaza " {1,}b)" → "\nb)" etc.
+          // Aplicar solo a líneas que empiezan con opción (para no romper texto normal).
+          processedResponse = processedResponse
+            .split('\n')
+            .map(line => {
+              if (/^\s*\*?[a-d][\).]/.test(line)) {
+                // Es una línea de opciones. Detectar inline y separar.
+                // Insertar salto antes de cada " ... b)/c)/d)" precedido por 1+ espacios.
+                return line.replace(/(\S)\s+(\*?[b-d][\).])/g, '$1\n$2');
+              }
+              return line;
+            })
+            .join('\n');
+
+          const questions = parseGeneratedQuestions(processedResponse, questionType, matchingMode);
           generatedQuestions.push(...questions);
 
           document.getElementById('counterNumber').textContent = generatedQuestions.length;
@@ -1613,7 +1797,7 @@
         return localStorage.getItem('groq_api_key_zhema') || '';
       }
 
-      async function generateLangResponse(questionType, questionCount, sourceContent, langArea, textType, difficultyLevel, includeHints, includePassage, contextClues) {
+      async function generateLangResponse(questionType, questionCount, sourceContent, langArea, textType, difficultyLevel, includeHints, includePassage, contextClues, matchingDomain) {
         const GROQ_API_KEY = getGroqApiKey();
 
         if (!GROQ_API_KEY) {
@@ -1663,10 +1847,68 @@
           true_false: {
             format: '1. [Afirmación sobre gramática, ortografía o contenido textual] (VERDADERO)\\n2. [Afirmación] (FALSO)',
             rules: 'Cada afirmación termina con (VERDADERO) o (FALSO). Mezcla afirmaciones verdaderas y falsas.'
+          },
+          matching_mc: {
+            format: '1. ¿Cuál es el [PAR] de "[ELEMENTO]"?\\n*a) Respuesta CORRECTA\\nb) Distractor 1\\nc) Distractor 2\\nd) Distractor 3',
+            rules: 'CRÍTICO ABSOLUTO: CADA OPCIÓN DEBE IR EN SU PROPIA LÍNEA SEPARADA. PROHIBIDO poner las 4 opciones en una sola línea con espacios entre ellas (ej: "*a) a   b) e   c) o   d) u" es INCORRECTO). El formato OBLIGATORIO es:\\n\\n1. [pregunta]\\n*a) opción correcta\\nb) distractor\\nc) distractor\\nd) distractor\\n\\nEXACTAMENTE 4 opciones (a, b, c, d). SOLO UNA correcta con asterisco (*) ANTES de la letra. Cada pregunta presenta UN elemento y pide su par. Los distractores deben ser elementos PLAUSIBLES del mismo dominio.'
+          },
+          matching_ma: {
+            format: 'match 1. [Instrucción de emparejamiento, ej: "Escribe la minúscula correspondiente a cada letra mayúscula"]\\nA = a\\nB = b\\nC = c\\nD = d\\nE = e',
+            rules: "Cada pregunta empieza con 'match X.' seguida de la instrucción. Luego cada par en su propia línea con formato 'IZQUIERDA = DERECHA' (con espacios alrededor del signo igual). Genera entre 4 y 8 pares por pregunta. Los pares deben ser elementos relacionados claramente del dominio especificado. NO uses formato de opción múltiple (no asterisco, no a/b/c/d)."
           }
         };
 
-        const typeInstructions = questionTypeInstructions[questionType];
+        // Determinar el tipo efectivo para selección de instrucciones
+        let effectiveType = questionType;
+        if (questionType === 'matching') {
+          const matchingModeVal = document.getElementById('matchingMode').value;
+          effectiveType = matchingModeVal === 'ma' ? 'matching_ma' : 'matching_mc';
+        }
+
+        const typeInstructions = questionTypeInstructions[effectiveType];
+
+        const matchingDomainDescriptions = {
+          mayus_minus: {
+            label: 'MAYÚSCULA → MINÚSCULA',
+            instr: 'Cada pregunta presenta UNA LETRA MAYÚSCULA del alfabeto español y pide su forma minúscula. Ejemplo: "¿Cuál es la minúscula de la letra A?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) a\nb) e\nc) o\nd) u\nIncluye letras del alfabeto español completo (A-Z, incluyendo Ñ). Los distractores deben ser OTRAS minúsculas reales (no símbolos ni letras inventadas).'
+          },
+          minus_mayus: {
+            label: 'MINÚSCULA → MAYÚSCULA',
+            instr: 'Cada pregunta presenta UNA LETRA MINÚSCULA y pide su forma mayúscula. Ejemplo: "¿Cuál es la mayúscula de la letra a?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) A\nb) E\nc) O\nd) U\nLos distractores deben ser OTRAS mayúsculas reales.'
+          },
+          sinonimos: {
+            label: 'PALABRA → SINÓNIMO',
+            instr: 'Cada pregunta presenta UNA PALABRA común en español y pide su SINÓNIMO. Ejemplo: "¿Cuál es un sinónimo de \\"feliz\\"?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) alegre\nb) triste\nc) cansado\nd) enojado\nLos distractores deben ser palabras de la misma categoría gramatical pero con significado distinto (incluye al menos un antónimo como distractor).'
+          },
+          antonimos: {
+            label: 'PALABRA → ANTÓNIMO',
+            instr: 'Cada pregunta presenta UNA PALABRA y pide su ANTÓNIMO. Ejemplo: "¿Cuál es el antónimo de \\"grande\\"?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) pequeño\nb) enorme\nc) gigante\nd) amplio\nLos distractores deben incluir al menos un SINÓNIMO de la palabra (error común) y palabras no relacionadas.'
+          },
+          singular_plural: {
+            label: 'SINGULAR → PLURAL',
+            instr: 'Cada pregunta presenta UN SUSTANTIVO en singular y pide su forma plural. Incluye casos con reglas variadas: -s (casa→casas), -es (papel→papeles), invariables (lunes→lunes), cambios ortográficos (lápiz→lápices, luz→luces). Los distractores deben ser plurales mal formados que reflejen ERRORES COMUNES (lapizes, lunes inventado como "luneses", etc.).'
+          },
+          masc_fem: {
+            label: 'MASCULINO → FEMENINO',
+            instr: 'Cada pregunta presenta un sustantivo o adjetivo en masculino y pide su forma femenina. Incluye casos variados: -o/-a (niño→niña), añadir -a (profesor→profesora), invariables (estudiante→estudiante), formas distintas (toro→vaca, hombre→mujer). Los distractores deben reflejar errores comunes.'
+          },
+          verbo_infinitivo: {
+            label: 'VERBO CONJUGADO → INFINITIVO',
+            instr: 'Cada pregunta presenta un VERBO CONJUGADO en cualquier tiempo y persona, y pide su INFINITIVO. Ejemplo: "¿Cuál es el infinitivo de \\"comieron\\"?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) comer\nb) comprar\nc) correr\nd) cantar\nIncluye verbos regulares e irregulares de las tres conjugaciones (-ar, -er, -ir). Los distractores deben ser infinitivos plausibles.'
+          },
+          palabra_categoria: {
+            label: 'PALABRA → CATEGORÍA GRAMATICAL',
+            instr: 'Cada pregunta presenta UNA PALABRA y pide su CATEGORÍA GRAMATICAL. Ejemplo: "¿A qué categoría pertenece la palabra \\"rápidamente\\"?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) adverbio\nb) adjetivo\nc) sustantivo\nd) verbo\nLas categorías a usar: sustantivo, adjetivo, verbo, adverbio, pronombre, preposición, conjunción, artículo. Varía las categorías a lo largo del cuestionario.'
+          },
+          acento_tipo: {
+            label: 'PALABRA → TIPO DE ACENTUACIÓN',
+            instr: 'Cada pregunta presenta UNA PALABRA y pide clasificarla según su acentuación. Ejemplo: "¿Cómo se clasifica la palabra \\"cárcel\\" según su acentuación?" Opciones (CADA UNA EN SU PROPIA LÍNEA):\n*a) grave (llana)\nb) aguda\nc) esdrújula\nd) sobresdrújula\nIncluye palabras con y sin tilde de los cuatro tipos. Varía los tipos a lo largo del cuestionario.'
+          },
+          personalizado: {
+            label: 'PERSONALIZADO',
+            instr: 'Genera preguntas de emparejamiento según el dominio descrito por el usuario en el chat. Cada pregunta presenta un elemento y pide su par correspondiente, con 4 opciones donde solo una es correcta.'
+          }
+        };
 
         const passageInstruction =
           includePassage && langArea === 'comprension'
@@ -1678,6 +1920,12 @@
           : '';
 
         const hintInstruction = includeHints ? 'Después de cada pregunta añade: Hint: [estrategia de lectura o pista gramatical sin revelar la respuesta]' : '';
+
+        // Instrucción específica para emparejamiento (matching)
+        const matchingInstruction =
+          questionType === 'matching' && matchingDomain && matchingDomainDescriptions[matchingDomain]
+            ? '\n\nDOMINIO DE EMPAREJAMIENTO: ' + matchingDomainDescriptions[matchingDomain].label + '\n' + matchingDomainDescriptions[matchingDomain].instr + '\n\nIMPORTANTE: Cada pregunta debe presentar UN ELEMENTO DIFERENTE — no repitas el mismo elemento. Genera ' + questionCount + ' pares distintos.'
+            : '';
 
         const systemPrompt =
           'Eres un experto profesor de español y artes del lenguaje para adultos que estudian el GED. Generas preguntas claras, bien estructuradas y pedagógicamente válidas en español. ' +
@@ -1711,6 +1959,7 @@
           '\n\n' +
           'REGLAS CRÍTICAS:\n' +
           typeInstructions.rules +
+          matchingInstruction +
           '\n\n' +
           'INSTRUCCIONES ADICIONALES PARA LENGUAJE:\n' +
           '- Las preguntas deben evaluar HABILIDADES LINGÜÍSTICAS reales\n' +
@@ -1763,4 +2012,3 @@
     </script>
   </body>
 </html>
-
