@@ -845,7 +845,8 @@
         <div class="help-section">
           <h3>🔑 ¿Por qué necesitas una API key?</h3>
           <p>
-            Este generador utiliza el modelo Llama 3.3 70B a través de la API gratuita de Groq para crear preguntas. Cada profesor debe usar su propia clave personal, que se obtiene de
+            Este generador utiliza la API gratuita de Groq para crear preguntas. Puedes elegir el modelo
+            más abajo; Llama 3.3 70B es el predeterminado. Cada profesor debe usar su propia clave personal, que se obtiene de
             forma gratuita en menos de un minuto.
           </p>
         </div>
@@ -892,6 +893,21 @@
             <button id="toggleVisibilityBtn" class="help-btn">👁️ Mostrar/Ocultar</button>
           </div>
           <p id="apiKeyStatus" style="margin-top: 1rem; font-weight: 600; font-size: 0.95rem"></p>
+        </div>
+
+        <div class="help-section" style="background: #f0f9ff; border-left: 4px solid var(--primary)">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem;">
+            <h3 style="margin:0;">🤖 Modelo</h3>
+            <button type="button" id="refreshModelsBtn" class="help-btn" style="background:none; border:none; color:var(--primary); padding:0; font-weight:600; cursor:pointer;">🔄 Actualizar lista</button>
+          </div>
+          <!-- Lista de respaldo. loadGroqModels() la reemplaza en vivo cuando hay clave guardada. -->
+          <select id="modelSelect" style="width:100%; padding:0.875rem 1rem; border:2px solid var(--gray-300); border-radius:8px; font-family:'JetBrains Mono', monospace; font-size:0.95rem; margin-top:0.75rem; box-sizing:border-box; cursor:pointer; background:#fff;">
+            <option value="llama-3.3-70b-versatile" selected>⭐ Llama 3.3 70B Versatile — recomendado (rápido y fiable)</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B — OpenAI código abierto (mejor razonamiento)</option>
+            <option value="openai/gpt-oss-20b">GPT-OSS 20B — OpenAI código abierto (rápido y económico)</option>
+            <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2 — Moonshot AI</option>
+          </select>
+          <p id="modelStatus" style="margin-top:0.75rem; font-size:0.9rem; color:#555;">Guarda tu clave para cargar la lista de modelos en vivo desde Groq.</p>
         </div>
       </div>
     </div>
@@ -1321,6 +1337,7 @@
         localStorage.setItem('groq_api_key_zhema', key);
         apiKeyStatus.textContent = '✅ Clave guardada correctamente. Ya puedes generar preguntas.';
         apiKeyStatus.style.color = '#065f46';
+        loadGroqModels();
       };
 
       clearApiKeyBtn.onclick = () => {
@@ -1346,6 +1363,107 @@
           updateApiKeyStatus();
         }, 500);
       }
+
+      // ── Lista dinámica de modelos de Groq ──────────────────────────────────
+      // El menú se llena en vivo desde el endpoint /v1/models de Groq, de modo que
+      // las deprecaciones (p. ej. Llama 3.1 8B Instant) y los modelos nuevos
+      // (p. ej. GPT-OSS) aparecen solos, sin tocar el código.
+      const MODEL_STORAGE    = 'groq_model_zhema';
+      const GROQ_MODELS_URL  = 'https://api.groq.com/openai/v1/models';
+      const EXCLUDE_MODEL_RX = /whisper|tts|guard|embed|moderation|playai|stt/i;
+      const PREFERRED_MODELS = [
+        'llama-3.3-70b-versatile',
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'moonshotai/kimi-k2-instruct-0905'
+      ];
+      const FALLBACK_MODELS = [
+        { id: 'llama-3.3-70b-versatile',          label: '⭐ Llama 3.3 70B Versatile — recomendado (rápido y fiable)' },
+        { id: 'openai/gpt-oss-120b',              label: 'GPT-OSS 120B — OpenAI código abierto (mejor razonamiento)' },
+        { id: 'openai/gpt-oss-20b',               label: 'GPT-OSS 20B — OpenAI código abierto (rápido y económico)' },
+        { id: 'moonshotai/kimi-k2-instruct-0905', label: 'Kimi K2 — Moonshot AI' }
+      ];
+
+      function getSelectedModel() {
+        const sel = document.getElementById('modelSelect');
+        return (sel && sel.value) || localStorage.getItem(MODEL_STORAGE) || 'llama-3.3-70b-versatile';
+      }
+      function setModelStatus(msg) {
+        const el = document.getElementById('modelStatus');
+        if (el) el.textContent = msg;
+      }
+      function populateModelSelect(models) {
+        const sel   = document.getElementById('modelSelect');
+        const saved = localStorage.getItem(MODEL_STORAGE);
+        const prev  = sel.value;
+        sel.innerHTML = '';
+        models.forEach(function (m) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.label;
+          sel.appendChild(opt);
+        });
+        if (saved && [...sel.options].some(o => o.value === saved)) {
+          sel.value = saved;
+        } else if (prev && [...sel.options].some(o => o.value === prev)) {
+          sel.value = prev;
+        }
+      }
+      function fallbackModels() {
+        populateModelSelect(FALLBACK_MODELS);
+      }
+      async function loadGroqModels(opts) {
+        opts = opts || {};
+        const key = (localStorage.getItem('groq_api_key_zhema') || (apiKeyInput.value || '')).trim();
+        const btn = document.getElementById('refreshModelsBtn');
+        if (!key || !key.startsWith('gsk_')) {
+          if (opts.manual) setModelStatus('⚠️ Guarda una clave de Groq válida antes de cargar la lista en vivo.');
+          return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Cargando…'; }
+        setModelStatus('Cargando modelos desde Groq…');
+        try {
+          const res = await fetch(GROQ_MODELS_URL, {
+            headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          let list = (data.data || []).filter(function (m) {
+            return m && m.id && m.active !== false && !EXCLUDE_MODEL_RX.test(m.id);
+          });
+          if (!list.length) throw new Error('no se recibieron modelos de chat');
+          list.sort(function (a, b) {
+            const ia = PREFERRED_MODELS.indexOf(a.id);
+            const ib = PREFERRED_MODELS.indexOf(b.id);
+            if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            return a.id.localeCompare(b.id);
+          });
+          const models = list.map(function (m) {
+            const ctx   = m.context_window ? ' · ' + Math.round(m.context_window / 1000) + 'K ctx' : '';
+            const owner = m.owned_by ? ' — ' + m.owned_by : '';
+            const star  = (PREFERRED_MODELS.indexOf(m.id) === 0) ? '⭐ ' : '';
+            return { id: m.id, label: star + m.id + owner + ctx };
+          });
+          populateModelSelect(models);
+          setModelStatus('✅ Lista en vivo cargada — ' + models.length + ' modelos de chat disponibles.');
+        } catch (e) {
+          fallbackModels();
+          setModelStatus('⚠️ No se pudo cargar la lista en vivo (' + e.message + '). Mostrando los modelos predeterminados.');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '🔄 Actualizar lista'; }
+        }
+      }
+
+      // Llenar el menú al cargar; refrescar en vivo si ya hay clave guardada.
+      fallbackModels();
+      if (localStorage.getItem('groq_api_key_zhema')) loadGroqModels();
+
+      document.getElementById('refreshModelsBtn').addEventListener('click', function () {
+        loadGroqModels({ manual: true });
+      });
+      document.getElementById('modelSelect').addEventListener('change', function () {
+        localStorage.setItem(MODEL_STORAGE, this.value);
+      });
 
       // PDF handling
       const pdfDropZone = document.getElementById('pdfDropZone');
@@ -1980,7 +2098,7 @@
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'llama-3.3-70b-versatile',
+              model: getSelectedModel(),
               messages: [
                 {role: 'system', content: systemPrompt},
                 {role: 'user', content: userPrompt}
