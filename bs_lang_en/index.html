@@ -169,6 +169,29 @@
         box-sizing: border-box;
       }
 
+      /* Model selector */
+      .model-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+      .model-label-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+      .model-refresh {
+        background: none; border: none; color: var(--accent-primary); cursor: pointer;
+        font-family: inherit; font-size: 0.85rem; padding: 0; white-space: nowrap;
+      }
+      .model-refresh:hover { text-decoration: underline; }
+      .model-refresh:disabled { color: var(--text-secondary); cursor: progress; text-decoration: none; }
+      .model-status { margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); }
+
       .api-btn-row {
         display: flex;
         gap: 0.75rem;
@@ -853,8 +876,9 @@
         <div class="help-section">
           <h3>🔑 Why do you need an API key?</h3>
           <p>
-            This generator uses the Llama 3.3 70B model through Groq's free API to create questions.
-            Each teacher should use their own personal key, which you can get for free in under a minute.
+            This generator uses Groq's free API to create questions. You can pick the model
+            below — Llama 3.3 70B is the default. Each teacher should use their own personal key,
+            which you can get for free in under a minute.
             Your key stays in your browser and is never shared with anyone else.
           </p>
         </div>
@@ -887,6 +911,21 @@
             <button id="toggleVisibilityBtn" class="help-btn api-btn-toggle">👁️ Show/Hide</button>
           </div>
           <p id="apiKeyStatus" class="api-status"></p>
+        </div>
+
+        <div class="help-section">
+          <div class="model-label-row">
+            <h3 style="margin:0;">🤖 Model</h3>
+            <button type="button" class="model-refresh" id="refreshModelsBtn">🔄 Refresh list</button>
+          </div>
+          <select id="modelSelect" class="model-select">
+            <!-- Built-in fallback list. Replaced live by loadGroqModels() once a key is saved. -->
+            <option value="llama-3.3-70b-versatile" selected>⭐ Llama 3.3 70B Versatile — recommended (fast, reliable)</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B — OpenAI open-source (stronger reasoning)</option>
+            <option value="openai/gpt-oss-20b">GPT-OSS 20B — OpenAI open-source (fast, economical)</option>
+            <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2 — Moonshot AI</option>
+          </select>
+          <p id="modelStatus" class="model-status">Save your key to load the live model list from Groq.</p>
         </div>
       </div>
     </div>
@@ -1117,6 +1156,7 @@
         localStorage.setItem(API_KEY_STORAGE, key);
         apiKeyStatus.textContent = '✅ Key saved successfully. You can now generate questions.';
         apiKeyStatus.style.color = 'var(--success-light)';
+        loadGroqModels();
       });
 
       document.getElementById('clearApiKeyBtn').addEventListener('click', function () {
@@ -1133,6 +1173,107 @@
       function getGroqApiKey() {
         return localStorage.getItem(API_KEY_STORAGE) || '';
       }
+
+      // ── Dynamic Groq model list ────────────────────────────────────────────
+      // The dropdown is filled live from Groq's /v1/models endpoint so model
+      // deprecations (e.g. Llama 3.1 8B Instant) and new additions (e.g. GPT-OSS)
+      // appear automatically, with no code edits.
+      const MODEL_STORAGE    = 'groq_model_zhema';
+      const GROQ_MODELS_URL  = 'https://api.groq.com/openai/v1/models';
+      const EXCLUDE_MODEL_RX = /whisper|tts|guard|embed|moderation|playai|stt/i;
+      const PREFERRED_MODELS = [
+        'llama-3.3-70b-versatile',
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
+        'moonshotai/kimi-k2-instruct-0905'
+      ];
+      const FALLBACK_MODELS = [
+        { id: 'llama-3.3-70b-versatile',          label: '⭐ Llama 3.3 70B Versatile — recommended (fast, reliable)' },
+        { id: 'openai/gpt-oss-120b',              label: 'GPT-OSS 120B — OpenAI open-source (stronger reasoning)' },
+        { id: 'openai/gpt-oss-20b',               label: 'GPT-OSS 20B — OpenAI open-source (fast, economical)' },
+        { id: 'moonshotai/kimi-k2-instruct-0905', label: 'Kimi K2 — Moonshot AI' }
+      ];
+
+      function getSelectedModel() {
+        const sel = document.getElementById('modelSelect');
+        return (sel && sel.value) || localStorage.getItem(MODEL_STORAGE) || 'llama-3.3-70b-versatile';
+      }
+      function setModelStatus(msg) {
+        const el = document.getElementById('modelStatus');
+        if (el) el.textContent = msg;
+      }
+      function populateModelSelect(models) {
+        const sel   = document.getElementById('modelSelect');
+        const saved = localStorage.getItem(MODEL_STORAGE);
+        const prev  = sel.value;
+        sel.innerHTML = '';
+        models.forEach(function (m) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.label;
+          sel.appendChild(opt);
+        });
+        if (saved && [...sel.options].some(o => o.value === saved)) {
+          sel.value = saved;
+        } else if (prev && [...sel.options].some(o => o.value === prev)) {
+          sel.value = prev;
+        }
+      }
+      function fallbackModels() {
+        populateModelSelect(FALLBACK_MODELS);
+      }
+      async function loadGroqModels(opts) {
+        opts = opts || {};
+        const key = getGroqApiKey() || (document.getElementById('apiKeyInput').value || '').trim();
+        const btn = document.getElementById('refreshModelsBtn');
+        if (!key || !key.startsWith('gsk_')) {
+          if (opts.manual) setModelStatus('⚠️ Save a valid Groq key first to load the live list.');
+          return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading…'; }
+        setModelStatus('Loading models from Groq…');
+        try {
+          const res = await fetch(GROQ_MODELS_URL, {
+            headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          let list = (data.data || []).filter(function (m) {
+            return m && m.id && m.active !== false && !EXCLUDE_MODEL_RX.test(m.id);
+          });
+          if (!list.length) throw new Error('no chat models returned');
+          list.sort(function (a, b) {
+            const ia = PREFERRED_MODELS.indexOf(a.id);
+            const ib = PREFERRED_MODELS.indexOf(b.id);
+            if (ia !== -1 || ib !== -1) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+            return a.id.localeCompare(b.id);
+          });
+          const models = list.map(function (m) {
+            const ctx   = m.context_window ? ' · ' + Math.round(m.context_window / 1000) + 'K ctx' : '';
+            const owner = m.owned_by ? ' — ' + m.owned_by : '';
+            const star  = (PREFERRED_MODELS.indexOf(m.id) === 0) ? '⭐ ' : '';
+            return { id: m.id, label: star + m.id + owner + ctx };
+          });
+          populateModelSelect(models);
+          setModelStatus('✅ Live model list loaded — ' + models.length + ' chat models available.');
+        } catch (e) {
+          fallbackModels();
+          setModelStatus('⚠️ Could not load the live list (' + e.message + '). Showing built-in defaults.');
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '🔄 Refresh list'; }
+        }
+      }
+
+      // Populate the dropdown on load; refresh live if a key is already saved.
+      fallbackModels();
+      if (getGroqApiKey()) loadGroqModels();
+
+      document.getElementById('refreshModelsBtn').addEventListener('click', function () {
+        loadGroqModels({ manual: true });
+      });
+      document.getElementById('modelSelect').addEventListener('change', function () {
+        localStorage.setItem(MODEL_STORAGE, this.value);
+      });
 
       // Auto-open the configuration modal if no key is saved
       if (!getGroqApiKey()) {
@@ -1836,7 +1977,7 @@ MATH PROBLEM SOLVING - Special Instructions:
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'llama-3.3-70b-versatile',
+              model: getSelectedModel(),
               messages: [
                 {role: 'system', content: systemPrompt},
                 {role: 'user', content: userPrompt}
