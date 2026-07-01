@@ -1416,7 +1416,7 @@
             currentQuestion = {
               type: questionType,
               id: 'Q' + questionCounter.toString().padStart(4, '0'),
-              title: 'Question ' + questionCounter,
+              title: '',
               text: line.replace(/^\d+\./, '').trim(),
               options: [],
               answer: '',
@@ -1463,6 +1463,20 @@
         if (currentQuestion) {
           questions.push(currentQuestion);
         }
+
+        // Barajar las opciones en MC y MS (Fisher-Yates) para que la respuesta
+        // correcta no quede siempre en la primera posicion. No se aplica a
+        // O (ordenar) ni M (emparejar), donde el orden es significativo.
+        questions.forEach(function (q) {
+          if ((q.type === 'MC' || q.type === 'MS') && q.options.length > 1) {
+            for (let k = q.options.length - 1; k > 0; k--) {
+              const j = Math.floor(Math.random() * (k + 1));
+              const tmp = q.options[k];
+              q.options[k] = q.options[j];
+              q.options[j] = tmp;
+            }
+          }
+        });
 
         return questions;
       }
@@ -1594,7 +1608,7 @@
           if (q.type === 'MC') {
             csv += 'NewQuestion,MC,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1612,7 +1626,7 @@
           } else if (q.type === 'MS') {
             csv += 'NewQuestion,MS,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1631,7 +1645,7 @@
           } else if (q.type === 'TF') {
             csv += 'NewQuestion,TF,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1646,7 +1660,7 @@
           } else if (q.type === 'SA') {
             csv += 'NewQuestion,SA,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1660,7 +1674,7 @@
           } else if (q.type === 'WR') {
             csv += 'NewQuestion,WR,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1673,7 +1687,7 @@
           } else if (q.type === 'M') {
             csv += 'NewQuestion,M,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1695,7 +1709,7 @@
           } else if (q.type === 'O') {
             csv += 'NewQuestion,O,,,\n';
             csv += 'ID,' + q.id + ',,,\n';
-            csv += 'Title,' + escapeCSV(mathToUnicode(q.title)) + ',,,\n';
+            csv += 'Title,,,,\n';
             csv += 'QuestionText,' + escapeCSV(mathToUnicode(q.text)) + ',,,\n';
             csv += 'Points,' + q.points + ',,,\n';
             csv += 'Difficulty,' + q.difficulty + ',,,\n';
@@ -1720,10 +1734,14 @@
         const BOM = '\uFEFF';
         const blob = new Blob([BOM + csvContent], {type: 'text/csv;charset=utf-8;'});
         const link = document.createElement('a');
-        const timestamp = new Date().toISOString().slice(0, 10);
-        link.download = 'brightspace_quiz_' + timestamp + '.csv';
-        link.href = URL.createObjectURL(blob);
+        const now = new Date();
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        const stamp = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + '_' + pad(now.getHours()) + '-' + pad(now.getMinutes()) + '-' + pad(now.getSeconds());
+        const url = URL.createObjectURL(blob);
+        link.download = 'brightspace_quiz_' + stamp + '.csv';
+        link.href = url;
         link.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
       }
 
       async function generateQuestions() {
