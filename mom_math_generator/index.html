@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <!--
   GenMath_MOM (Groq) - Generador de preguntas para MyOpenMath/IMathAS
   Version con API de Groq: cada docente usa su propia clave gratuita.
@@ -12,8 +12,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyOpenMath Question Generator - GED Math (Groq)</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
-       <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />    
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
+
+    <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />
     <meta name="license" content="CC BY-NC-SA 4.0" />
     <link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -180,12 +181,40 @@
       .topic-select { display: none; }
 
       /* Options Row */
-      .options-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-      .option-group .grupo-titulo { display: block; font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 0.5rem; font-weight: 500; }
+      /* Tres grupos en la fila. min-width:0 es imprescindible: sin él los hijos
+         del grid no pueden encoger por debajo de su contenido y se desbordan
+         unos sobre otros (Expert quedaba tapado por el grupo siguiente). */
+      .options-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+        align-items: start;
+      }
+      .option-group { min-width: 0; }
+      .option-group .grupo-titulo {
+        display: block; font-size: 0.9rem; color: var(--text-secondary);
+        margin: 0 0 0.5rem; font-weight: 500;
+      }
+      .grupo-nota {
+        margin: 0.45rem 0 0;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        /* --text-muted daba 3,07:1 sobre la tarjeta, por debajo del mínimo AA. */
+        color: var(--text-secondary);
+      }
 
-      .level-buttons { display: flex; gap: 0.5rem; }
+      /* Rejilla en vez de flex: cuatro niveles que se reacomodan solos a 2x2
+         cuando no caben, sin que ningún rótulo se salga de su caja. */
+      /* 2x2 SIEMPRE. Con auto-fit los cuatro caían 3+1 según el ancho
+         disponible y dejaban un hueco asimétrico bajo el tercer botón. */
+      .level-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
       .level-btn {
-        flex: 1; padding: 0.625rem 0.5rem; background: var(--bg-primary);
+        min-width: 0; padding: 0.7rem 0.4rem; background: var(--bg-primary);
         border: 2px solid var(--border-color); border-radius: 8px;
         color: var(--text-secondary); font-size: 0.75rem; font-weight: 500;
         cursor: pointer; transition: all 0.2s ease;
@@ -193,14 +222,21 @@
       .level-btn:hover { border-color: var(--accent-primary); color: var(--text-primary); }
       .level-btn.active { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
 
+      /* Misma altura que dos filas de niveles, para que las tres columnas
+         terminen alineadas en vez de escalonadas. */
       .answer-toggle {
-        display: flex; background: var(--bg-primary);
+        display: flex; align-items: stretch; background: var(--bg-primary);
         border-radius: 10px; padding: 4px; border: 1px solid var(--border-color);
+        min-height: 5.4rem;
       }
       .toggle-btn {
-        flex: 1; padding: 0.625rem 0.75rem; background: transparent; border: none;
-        border-radius: 8px; color: var(--text-secondary); font-size: 0.85rem;
-        font-weight: 500; cursor: pointer; transition: all 0.2s ease;
+        flex: 1 1 0; min-width: 0;
+        display: flex; align-items: center; justify-content: center; gap: 0.3rem;
+        padding: 0.5rem 0.4rem; background: transparent; border: none;
+        border-radius: 8px; color: var(--text-secondary); font-size: 0.82rem;
+        font-weight: 500; line-height: 1.25; text-align: center;
+        white-space: nowrap;   /* "Multiple choice" partía en dos lineas */
+        cursor: pointer; transition: all 0.2s ease;
       }
       .toggle-btn.active { background: var(--accent-secondary); color: white; }
 
@@ -370,8 +406,7 @@
       @media (max-width: 640px) {
         .category-grid { grid-template-columns: repeat(3, 1fr); }
         .options-row { grid-template-columns: 1fr; }
-        .level-buttons { flex-wrap: wrap; }
-        .level-btn { flex: 1 1 45%; }
+        .answer-toggle { min-height: 0; }
         .preview-options { grid-template-columns: 1fr; }
         .chips-container { gap: 0.4rem; }
         .chip { font-size: 0.72rem; }
@@ -409,11 +444,12 @@
         <p class="api-hint" style="margin-top:1rem;margin-bottom:0.4rem;font-weight:600;color:var(--text-primary);">Model</p>
         <div class="api-input-wrapper">
           <select id="modelSelect" style="flex:1;background:var(--bg-primary);border:2px solid var(--border-color);border-radius:12px;padding:0.75rem 1rem;color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:0.9rem;cursor:pointer;">
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile — recommended (highest per-minute quota)</option>
-            <option value="openai/gpt-oss-120b">GPT-OSS 120B — stronger reasoning, smaller quota</option>
-            <option value="openai/gpt-oss-20b">GPT-OSS 20B — fast and economical</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B — OpenAI open-source</option>
+            <option value="openai/gpt-oss-20b">GPT-OSS 20B — smaller and faster</option>
+            <option value="qwen/qwen3.6-27b">Qwen 3.6 27B — Alibaba Cloud</option>
           </select>
           <button onclick="loadModels()" id="refreshModelsBtn" class="icon-btn" title="Refresh the list with the models available right now">↻</button>
+          <button onclick="medirTodos()" id="medirBtn" class="icon-btn" title="Measure each model's real per-minute limit (costs only a few tokens)">📏</button>
         </div>
         <p class="api-hint"><span id="modelStatus">These are the built-in defaults. With your key in place, press ↻ to load the current list from Groq.</span></p>
 
@@ -434,9 +470,11 @@
 
           <h3>What the free tier can and cannot do</h3>
           <p>Groq caps <em>tokens per minute</em> (TPM) per model, counting your request and the reply together.
-          On the free plan, <strong>Llama 3.3 70B allows about 12,000 TPM</strong> and <strong>GPT-OSS 120B about 8,000</strong>.
-          Those numbers change; the meter above reads the real limit for your account from Groq&rsquo;s own response
-          headers, so trust the meter over this paragraph.</p>
+          The limit differs from model to model and Groq changes its catalogue often &mdash; the Llama models this
+          tool originally recommended were retired in June 2026. So nothing here is hard-coded: press the
+          <strong>&#128207;</strong> button next to the model list and the tool asks Groq directly for each
+          model&rsquo;s real limit, reading it from the response headers. The table below then tells you the truth
+          for <em>your</em> account, not a number I wrote down months ago.</p>
 
           <p>The rulebook this tool sends the model is long, because MyOpenMath question code is unforgiving.
           It is trimmed automatically &mdash; coordinate-plane and table rules are only included when your exercise
@@ -450,11 +488,24 @@
           larger than one free minute allows &mdash; not because the tool is failing, but because the rules that make
           MyOpenMath produce correct question code are themselves long.</p>
 
-          <p><strong>Start with Llama 3.3 70B.</strong> If every row above says &ldquo;Does not fit&rdquo;, you are on a
-          model with a smaller quota. GPT-OSS 120B allows only 8,000 tokens per minute, which is below what even the
-          simplest exercise needs here. Open the <strong>Model</strong> list above and pick
-          <strong>Llama 3.3 70B Versatile</strong>: at 12,000 tokens per minute most combinations turn green. The
-          other models are worth trying only once you are curious, not as a starting point.</p>
+          <p><strong>What actually works on the free tier right now.</strong> Groq retired the Llama models in
+          June 2026, and the replacements come with an 8,000 tokens-per-minute allowance. That is enough for
+          <strong>multiple-choice questions in arithmetic and algebra</strong> &mdash; the combination at the top of
+          the table &mdash; and not much else. Start there. Set <em>Answer type</em> to
+          <strong>Multiple choice</strong>, pick Arithmetic or Algebra, and leave coordinate planes, graphs and data
+          tables out of your description.</p>
+
+          <p>Open answers, geometry and anything with a figure need more room than one free minute allows. That is a
+          real limitation rather than a bug: the rules that make MyOpenMath produce correct algorithmic code are
+          themselves long, and they have to travel with every single request.</p>
+
+          <p>If you need the rest, Groq&rsquo;s Developer plan lifts the ceiling to roughly
+          250,000&ndash;300,000 tokens per minute. It removes the problem entirely and costs a fraction of a cent
+          per question &mdash; you would have to generate thousands of exercises to spend a dollar.</p>
+
+          <p><strong>One practical note.</strong> The limit counts a rolling minute, so even a combination marked
+          &ldquo;Tight&rdquo; will fail if you generate twice in quick succession. Wait about a minute between
+          questions and it behaves.</p>
 
           <p>If graphing questions matter to you, the honest answer is to add a few dollars of credit on Groq&rsquo;s
           Developer plan. It raises the ceiling to roughly 250,000&ndash;300,000 TPM, which removes this constraint
@@ -476,20 +527,20 @@
         </div>
 
         <div class="category-grid">
-          <button class="category-btn active" data-category="algebra" onclick="selectCategory(this)">
+          <button class="category-btn active" data-category="aritmetica" onclick="selectCategory(this)">
+            <span class="emoji">➕</span><span class="text">Arithmetic</span>
+          </button>
+          <button class="category-btn" data-category="algebra" onclick="selectCategory(this)">
             <span class="emoji">🔢</span><span class="text">Algebra</span>
+          </button>
+          <button class="category-btn" data-category="estadistica" onclick="selectCategory(this)">
+            <span class="emoji">📊</span><span class="text">Statistics</span>
           </button>
           <button class="category-btn" data-category="geometria" onclick="selectCategory(this)">
             <span class="emoji">📐</span><span class="text">Geometry</span>
           </button>
-          <button class="category-btn" data-category="aritmetica" onclick="selectCategory(this)">
-            <span class="emoji">➕</span><span class="text">Arithmetic</span>
-          </button>
           <button class="category-btn" data-category="funciones" onclick="selectCategory(this)">
             <span class="emoji">📈</span><span class="text">Functions</span>
-          </button>
-          <button class="category-btn" data-category="estadistica" onclick="selectCategory(this)">
-            <span class="emoji">📊</span><span class="text">Statistics</span>
           </button>
         </div>
 
@@ -529,9 +580,27 @@ e.g. Converting between scientific and decimal notation with negative exponents�
           <div class="option-group">
             <p class="grupo-titulo" id="tituloTipo">Answer type</p>
             <div class="answer-toggle" role="group" aria-labelledby="tituloTipo">
-              <button class="toggle-btn active" data-type="abierta" onclick="selectAnswerType(this)">✏️ Open answer</button>
-              <button class="toggle-btn" data-type="multiple" onclick="selectAnswerType(this)">🔘 Multiple choice</button>
+              <button class="toggle-btn" data-type="abierta" onclick="selectAnswerType(this)">
+                <span aria-hidden="true">✏️</span> Open answer
+              </button>
+              <button class="toggle-btn active" data-type="multiple" onclick="selectAnswerType(this)">
+                <span aria-hidden="true">🔘</span> Multiple choice
+              </button>
             </div>
+            <p class="grupo-nota">Multiple choice is the lighter option.</p>
+          </div>
+
+          <div class="option-group">
+            <p class="grupo-titulo" id="tituloSolucion">Worked solution</p>
+            <div class="answer-toggle" role="group" aria-labelledby="tituloSolucion">
+              <button class="toggle-btn active" data-sol="no" onclick="selectSolution(this)">
+                <span aria-hidden="true">⚡</span> Skip
+              </button>
+              <button class="toggle-btn" data-sol="si" onclick="selectSolution(this)">
+                <span aria-hidden="true">📖</span> Include
+              </button>
+            </div>
+            <p class="grupo-nota">Including it adds about 900 tokens.</p>
           </div>
         </div>
       </div>
@@ -606,9 +675,10 @@ e.g. Converting between scientific and decimal notation with negative exponents�
 
     <script>
       // ── State ──────────────────────────────────────────────────────────────
-      let currentCategory = 'algebra';
+      let currentCategory = 'aritmetica';
       let currentLevel    = 'intermedio';
-      let currentAnswerType = 'abierta';
+      let currentAnswerType = 'multiple';
+      let incluirSolucion   = false;   // por defecto SIN solución: es lo que cabe en la cuota gratuita
       let resultData = null;
 
       // ── Example chips per category ─────────────────────────────────────────
@@ -724,11 +794,13 @@ e.g. Converting between scientific and decimal notation with negative exponents�
       // Llena el selector con los modelos de chat vigentes en Groq. Si falla
       // (sin clave, CORS, red), conserva las opciones por defecto del HTML.
       const GROQ_MODELS_URL  = 'https://api.groq.com/openai/v1/models';
-      const EXCLUDE_MODEL_RX = /whisper|tts|guard|embed|moderation|playai|stt|compound/i;
+      // Orpheus (Canopy Labs) y Allam son modelos de VOZ, no de chat: aparecían en
+      // la lista y no sirven para generar preguntas. Se filtran igual que whisper.
+      const EXCLUDE_MODEL_RX = /whisper|tts|guard|embed|moderation|playai|stt|compound|orpheus|canopylabs|allam/i;
       const PREFERRED_MODELS = [
-        'llama-3.3-70b-versatile',
         'openai/gpt-oss-120b',
-        'openai/gpt-oss-20b'
+        'openai/gpt-oss-20b',
+        'qwen/qwen3.6-27b'
       ];
 
       async function loadModels() {
@@ -769,7 +841,7 @@ e.g. Converting between scientific and decimal notation with negative exponents�
           const saved = localStorage.getItem('groq_model_mom');
           if (ids.indexOf(prev) >= 0)        sel.value = prev;
           else if (saved && ids.indexOf(saved) >= 0) sel.value = saved;
-          else { const l = ids.find(id => /llama-3\.3-70b/i.test(id)); sel.value = l || ids[0]; }
+          else { const l = ids.find(id => /gpt-oss-120b/i.test(id)); sel.value = l || ids[0]; }
           status.textContent = '✅ ' + models.length + ' models loaded. In use: ' + sel.value;
           actualizarMedidor();
         } catch (e) {
@@ -814,9 +886,18 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         actualizarMedidor();
       }
       function selectAnswerType(btn) {
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.toggle-btn[data-type]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentAnswerType = btn.dataset.type;
+        actualizarMedidor();
+      }
+      // La solución paso a paso es el campo más largo de la respuesta: unos 900
+      // tokens. Poder omitirla es la diferencia entre caber y no caber en la
+      // cuota gratuita, y el ejercicio sigue siendo válido sin ella.
+      function selectSolution(btn) {
+        document.querySelectorAll('.toggle-btn[data-sol]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        incluirSolucion = (btn.dataset.sol === 'si');
         actualizarMedidor();
       }
       function switchTab(tab) {
@@ -866,6 +947,9 @@ e.g. Converting between scientific and decimal notation with negative exponents�
       //   · response_format json_object cuando el modelo lo admite, con
       //     repliegue automático si lo rechaza;
       //   · reintento con presupuesto menor si salta la cuota por minuto.
+      // Última medición real devuelta por Groq, para poder informar con datos.
+      let ultimaMedicion = null;
+
       async function requestQuestion(apiKey, topicText, customDesc, allowRetry) {
         const sistema = buildSystemPrompt();
         const usuario = buildUserPrompt(topicText, customDesc);
@@ -877,22 +961,44 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         // answers "Failed to validate JSON", which tells the instructor nothing useful.
         // Stop here instead and say what actually has to change.
         if (salida < MINIMO_SALIDA) {
-          const modelo = (document.getElementById('modelSelect') || {}).value || 'this model';
+          const modelo = modeloActual();
+          const medido = tpmMedido(modelo);
+          const nombreCat = { algebra: 'Algebra', geometria: 'Geometry', aritmetica: 'Arithmetic',
+                              funciones: 'Functions', estadistica: 'Statistics' }[currentCategory] || currentCategory;
+          const nombreTipo = (currentAnswerType === 'multiple') ? 'multiple choice' : 'open answer';
+
+          // El mensaje tiene que decir QUÉ combinación se midió, de dónde sale el
+          // límite, y qué pesa cada cosa. Sin eso el docente no puede decidir nada.
+          const extras = [];
+          if (necesitaPlano()) extras.push('coordinate-plane rules');
+          if (necesitaTabla()) extras.push('data-table rules');
+          if (currentCategory === 'geometria') extras.push('SVG figure rules');
+
           throw new Error(
-            'this combination does not fit ' + modelo + '\u2019s per-minute quota of ' +
-            getTpmLimit().toLocaleString('en') + ' tokens. The rules alone take about ' +
-            entrada.toLocaleString('en') + ', which leaves too little room for the answer. ' +
-            'Nothing was sent, so none of your quota was used. Switch to Llama 3.3 70B in the ' +
-            'Model list above, or describe the exercise without a coordinate plane, a graph or a table'
+            'this will not fit. Combination measured: ' + nombreCat + ' \u00b7 ' + nombreTipo +
+            (extras.length ? ' (plus ' + extras.join(' and ') + ')' : '') +
+            '. The rules come to about ' + entrada.toLocaleString('en') + ' tokens and ' + modelo +
+            ' allows ' + getTpmLimit(modelo).toLocaleString('en') + ' per minute' +
+            (medido ? ' (measured from Groq)' : ' (assumed \u2014 press \uD83D\uDCCF to measure it)') +
+            ', so there is no room left for the answer. Nothing was sent and none of your quota was used. ' +
+            'The lightest combination is Arithmetic or Algebra with multiple choice and no figure, ' +
+            'around 4,900 tokens \u2014 try that one first'
           );
         }
 
-        let usarJsonMode = true;
+        // Modo JSON nativo DESACTIVADO por defecto. Con este prompt tan largo Groq
+        // devuelve "Failed to generate JSON" o "Failed to validate JSON" con
+        // frecuencia, y cada repliegue cuesta OTRA petición completa dentro del
+        // mismo minuto, que en el plan gratuito es justo lo que no sobra.
+        // El parseador tolerante de abajo ya extrae el objeto aunque venga con
+        // ```json alrededor o con una coma colgante.
+        let usarJsonMode = false;
+        let usarRazonamiento = true;   // se apaga si el modelo rechaza el parámetro
         let intento = 0;
 
         while (true) {
           const cuerpo = {
-            model: (document.getElementById('modelSelect').value || 'llama-3.3-70b-versatile'),
+            model: modeloActual(),
             max_tokens: salida,
             temperature: 0.2,
             messages: [
@@ -902,6 +1008,20 @@ e.g. Converting between scientific and decimal notation with negative exponents�
           };
           if (usarJsonMode) cuerpo.response_format = { type: 'json_object' };
 
+          // gpt-oss y qwen3 son modelos de RAZONAMIENTO: por defecto gastan parte
+          // del presupuesto de salida pensando antes de escribir. Con 'medium'
+          // (el valor por defecto de gpt-oss) el JSON se quedaba a medias aunque
+          // hubiera 3.000 tokens reservados. Aquí no queremos deliberación: el
+          // manual de reglas ya lleva todo el razonamiento escrito.
+          if (usarRazonamiento) {
+            if (/gpt-oss/i.test(cuerpo.model)) {
+              cuerpo.reasoning_effort = 'low';
+              cuerpo.include_reasoning = false;
+            } else if (/qwen3/i.test(cuerpo.model)) {
+              cuerpo.reasoning_effort = 'none';
+            }
+          }
+
           const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
@@ -910,50 +1030,115 @@ e.g. Converting between scientific and decimal notation with negative exponents�
 
           // Los encabezados son la fuente de verdad del límite real de la cuenta.
           const limiteCabecera = parseInt(response.headers.get('x-ratelimit-limit-tokens'), 10);
-          if (limiteCabecera) setTpmLimit(limiteCabecera);
+          if (limiteCabecera) setTpmLimit(limiteCabecera, cuerpo.model);
 
           if (!response.ok) {
             let msg = response.statusText;
             try { const e = await response.json(); msg = (e.error && e.error.message) || msg; } catch (e) {}
 
             const declarado = /Limit\s+(\d{3,7})/i.exec(msg);
-            if (declarado) setTpmLimit(parseInt(declarado[1], 10));
+            if (declarado) setTpmLimit(parseInt(declarado[1], 10), cuerpo.model);
+
+            // Groq dice en el error cuántos tokens pedimos REALMENTE ("Requested N").
+            // Ese número es la medición que nunca tuve: con él se calibra el
+            // estimador de caracteres por token y se deja de adivinar.
+            const pedido = /Requested\s+(\d{3,7})/i.exec(msg);
+            if (pedido) {
+              const tokensPedidos = parseInt(pedido[1], 10);
+              const tokensPrompt  = tokensPedidos - salida;
+              if (tokensPrompt > 200) calibrarRatio((sistema + usuario).length, tokensPrompt);
+              ultimaMedicion = { pedidos: tokensPedidos, prompt: tokensPrompt, salida: salida };
+            }
 
             // El modelo no admite modo JSON: repetir sin él.
-            if (usarJsonMode && /response_format|json_object|json mode|json_validate_failed|failed to validate json/i.test(msg)) {
+            // El modelo no admite reasoning_effort/include_reasoning: repetir sin ellos.
+            if (usarRazonamiento && /reasoning/i.test(msg)) {
+              usarRazonamiento = false;
+              continue;
+            }
+            // Cualquier queja que mencione JSON estando el modo activo: repetir sin él.
+            // Antes la lista era literal y "Failed to GENERATE json" no encajaba con
+            // "failed to VALIDATE json", así que el repliegue nunca llegaba a saltar.
+            if (usarJsonMode && /json|response_format/i.test(msg)) {
               usarJsonMode = false;
               continue;
             }
-            // Cuota por minuto: bajar el presupuesto y reintentar.
-            if (/tokens per minute|rate.?limit|request too large|tpm/i.test(msg) && intento < 2) {
+            // Cuota por minuto. Reintentar al segundo era CONTRAPRODUCENTE: la
+            // ventana es de 60 segundos, así que cada reintento inmediato gastaba
+            // más cuota de la que intentaba liberar y hundía la petición siguiente.
+            // Ahora se espera lo que Groq indique y se reintenta UNA sola vez.
+            if (/tokens per minute|rate.?limit|request too large|tpm/i.test(msg) && intento < 1) {
               intento++;
-              salida = Math.max(700, Math.floor(salida * 0.55));
-              document.getElementById('generateBtn').innerHTML =
-                '<span class="loader"></span> Quota adjusted, retrying...';
-              await new Promise(r => setTimeout(r, 1500));
+              let espera = parseFloat(response.headers.get('retry-after')) || 0;
+              const enMensaje = /try again in ([\d.]+)s/i.exec(msg);
+              if (!espera && enMensaje) espera = parseFloat(enMensaje[1]);
+              espera = Math.min(Math.max(Math.ceil(espera) + 2, 5), 70);
+
+              const btnGen = document.getElementById('generateBtn');
+              for (let queda = espera; queda > 0; queda--) {
+                btnGen.innerHTML = '<span class="loader"></span> Quota refilling, retrying in ' + queda + 's';
+                await new Promise(r => setTimeout(r, 1000));
+              }
+              btnGen.innerHTML = '<span class="loader"></span> Generating...';
+              // El presupuesto NO se recorta: el problema era la ventana, no el tamaño.
               continue;
             }
             if (/tokens per minute|request too large|tpm/i.test(msg)) {
-              throw new Error('Groq\u2019s per-minute quota is not enough for this combination. ' +
-                'Check the meter in the card above: switch model, use an open answer, ' +
-                'or request the exercise without a coordinate plane or a table.');
+              const lim = getTpmLimit(cuerpo.model);
+              let detalle = '';
+              if (ultimaMedicion) {
+                detalle = ' Groq reports the real size of this request: ' +
+                  ultimaMedicion.prompt.toLocaleString('en') + ' tokens of rules plus ' +
+                  ultimaMedicion.salida.toLocaleString('en') + ' reserved for the answer, ' +
+                  ultimaMedicion.pedidos.toLocaleString('en') + ' in total against a limit of ' +
+                  lim.toLocaleString('en') + '. Those figures are now stored, so the table above ' +
+                  'and the meter will be accurate from here on.';
+              }
+              throw new Error('the free per-minute quota is not enough for this combination.' + detalle +
+                ' Lighter options: Arithmetic with multiple choice and no figure is the smallest request ' +
+                'this tool can make. If that one also fails, the free tier cannot run this generator and ' +
+                'the honest answer is Groq\u2019s paid Developer plan or using the Anthropic build.');
             }
             throw new Error(msg);
           }
 
           const data = await response.json();
+
+          // Groq informa del consumo exacto: se usa para afinar el estimador.
+          if (data.usage && data.usage.prompt_tokens) {
+            calibrarRatio((sistema + usuario).length, data.usage.prompt_tokens);
+          }
+
           if (!data.choices || !data.choices[0]) throw new Error('Empty response from the model.');
           const content = data.choices[0].message.content;
+
+          // Groq dice por qué paró y cuánto gastó. Deducirlo del texto era adivinar.
+          const motivo = data.choices[0].finish_reason || '';
+          const gasto  = data.usage || {};
+          const razona = (gasto.completion_tokens_details && gasto.completion_tokens_details.reasoning_tokens) || 0;
 
           try {
             return parseModelJson(content);
           } catch (e) {
-            if (allowRetry) {
-              const btn = document.getElementById('generateBtn');
-              btn.innerHTML = '<span class="loader"></span> Retrying...';
-              return await requestQuestion(apiKey, topicText, customDesc, false);
-            }
-            throw new Error('The model reply was not valid JSON (' + e.message + ')');
+            // Reintentar aquí lanzaba OTRA petición completa dentro del mismo
+            // minuto, que en el plan gratuito choca con la cuota sin remedio. Es
+            // más útil decir qué pasó y dejar que el docente pulse cuando quiera.
+            // El diagnóstico sale de lo que Groq informa, no de lo que yo suponga.
+            const cortado = (motivo === 'length');
+            let detalle = ' Groq reports: finish_reason=' + (motivo || 'unknown') +
+              ', ' + (gasto.completion_tokens || 0) + ' tokens written of ' + salida + ' allowed';
+            if (razona) detalle += ', of which ' + razona + ' were spent on reasoning';
+            detalle += '.';
+
+            throw new Error(
+              'the model did not return usable JSON.' + detalle +
+              (cortado
+                ? (razona > salida * 0.4
+                    ? ' Most of the budget went into the model thinking rather than writing. Try GPT-OSS 20B or another model in the list.'
+                    : ' The reply ran out of room: switch "Worked solution" to Skip, or choose a lighter category.')
+                : ' The reply finished but did not parse (' + e.message + '); a second attempt usually works.') +
+              ' Wait about a minute for the quota window to clear before trying again.'
+            );
           }
         }
       }
@@ -1003,33 +1188,135 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         return RX_PLANO.test(descripcionActual());
       }
       function necesitaTabla() {
-        if (currentCategory === 'estadistica' || currentCategory === 'datos') return true;
-        return RX_TABLA.test(descripcionActual());
+        // Las palabras clave mandan siempre.
+        if (RX_TABLA.test(descripcionActual())) return true;
+        // Estadística NO implica tabla: un histograma o una gráfica de líneas no
+        // lleva ninguna. Forzarlas por categoría costaba ~1.000 tokens inútiles
+        // justo en la combinación que menos margen tiene.
+        if (currentCategory === 'estadistica' || currentCategory === 'datos') {
+          return !RX_PLANO.test(descripcionActual());
+        }
+        return false;
       }
 
       // ── Presupuesto de tokens (Groq cobra input + output contra el TPM) ────
-      const TPM_STORAGE = 'groq_tpm_mom';
-      const TPM_DEFAULT = 12000; // llama-3.3-70b-versatile en plan gratuito
-      function getTpmLimit() {
-        const v = parseInt(localStorage.getItem(TPM_STORAGE), 10);
-        return (v && v > 1000) ? v : TPM_DEFAULT;
-      }
-      function setTpmLimit(v) {
-        if (v && v > 1000 && v !== getTpmLimit()) {
-          localStorage.setItem(TPM_STORAGE, String(v));
-          actualizarMedidor();
-        }
-      }
-      // Estimación deliberadamente pesimista: ~3,2 caracteres por token.
-      function estimarTokens(t) { return Math.ceil((t || '').length / 3.2); }
+      // El límite es POR MODELO, no por cuenta: guardarlo en un solo número hacía
+      // que al cambiar de modelo se arrastrara el límite del anterior. Ahora se
+      // guarda un mapa {modelo: límite} y, cuando se puede, se MIDE de verdad.
+      const TPM_STORAGE = 'groq_tpm_por_modelo';
+      const TPM_SUPUESTO = 8000; // suposición conservadora mientras no se mida
 
-      // Salida típica observada para un ejercicio completo con solución detallada.
-      const SALIDA_TIPICA = 2200;
+      function modeloActual() {
+        const sel = document.getElementById('modelSelect');
+        return (sel && sel.value) || 'openai/gpt-oss-120b';
+      }
+      function mapaTpm() {
+        try { return JSON.parse(localStorage.getItem(TPM_STORAGE)) || {}; }
+        catch (e) { return {}; }
+      }
+      function tpmMedido(modelo) {
+        const v = mapaTpm()[modelo || modeloActual()];
+        return (v && v > 1000) ? v : null;
+      }
+      function getTpmLimit(modelo) {
+        return tpmMedido(modelo) || TPM_SUPUESTO;
+      }
+      function setTpmLimit(v, modelo) {
+        if (!v || v <= 1000) return;
+        const m = modelo || modeloActual();
+        const mapa = mapaTpm();
+        if (mapa[m] === v) return;
+        mapa[m] = v;
+        localStorage.setItem(TPM_STORAGE, JSON.stringify(mapa));
+        actualizarMedidor();
+      }
+
+      // Sonda barata: una petición mínima devuelve la cabecera con el límite real
+      // del modelo. Cuesta unas decenas de tokens y evita adivinar.
+      async function medirTpm(modelo) {
+        const key = document.getElementById('apiKey').value.trim();
+        if (!key) return null;
+        try {
+          const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+            body: JSON.stringify({
+              model: modelo,
+              max_tokens: 1,
+              messages: [{ role: 'user', content: 'hi' }]
+            })
+          });
+          const lim = parseInt(r.headers.get('x-ratelimit-limit-tokens'), 10);
+          if (lim) { setTpmLimit(lim, modelo); return lim; }
+          if (!r.ok) {
+            let msg = '';
+            try { const e = await r.json(); msg = (e.error && e.error.message) || ''; } catch (e) {}
+            const d = /Limit\s+(\d{3,7})/i.exec(msg);
+            if (d) { setTpmLimit(parseInt(d[1], 10), modelo); return parseInt(d[1], 10); }
+          }
+        } catch (e) { /* sin red o sin permiso: se queda con la suposición */ }
+        return null;
+      }
+
+      // Mide TODOS los modelos de la lista para que el docente vea de un vistazo
+      // cuál le da más margen. Son unas decenas de tokens en total.
+      async function medirTodos() {
+        const sel = document.getElementById('modelSelect');
+        const btn = document.getElementById('medirBtn');
+        const est = document.getElementById('modelStatus');
+        if (!sel || !document.getElementById('apiKey').value.trim()) {
+          if (est) est.textContent = '⚠️ Save your key first, then measure the limits.';
+          return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+        const ids = [...sel.options].map(o => o.value);
+        for (const id of ids) {
+          if (est) est.textContent = 'Measuring the per-minute limit of ' + id + '…';
+          await medirTpm(id);
+          await new Promise(r => setTimeout(r, 400));
+        }
+        if (est) est.textContent = '✅ Limits measured for ' + ids.length +
+          ' models. Wait about a minute before generating, so the measurement itself does not eat into your quota.';
+        if (btn) { btn.disabled = false; btn.textContent = '📏'; }
+        actualizarMedidor();
+      }
+      // Caracteres por token. 3,2 era la cifra del prompt en español; el inglés
+      // tokeniza mejor (3,8-4,0) y esa diferencia bastaba para declarar imposible
+      // una combinación que sí cabía. Se parte de 3,8 y se CALIBRA con el consumo
+      // real que Groq devuelve en cada respuesta, igual que con el límite TPM.
+      const RATIO_STORAGE = 'groq_chars_por_token';
+      const RATIO_INICIAL = 3.8;
+
+      function ratioCaracteres() {
+        const v = parseFloat(localStorage.getItem(RATIO_STORAGE));
+        return (v && v >= 2.5 && v <= 6) ? v : RATIO_INICIAL;
+      }
+      function ratioCalibrado() {
+        return localStorage.getItem(RATIO_STORAGE) !== null;
+      }
+      // Media móvil suave: una respuesta rara no descoloca la estimación.
+      function calibrarRatio(caracteres, tokensReales) {
+        if (!caracteres || !tokensReales || tokensReales < 200) return;
+        const observado = caracteres / tokensReales;
+        if (observado < 2.5 || observado > 6) return;
+        const previo = ratioCaracteres();
+        const nuevo = ratioCalibrado() ? (previo * 0.7 + observado * 0.3) : observado;
+        localStorage.setItem(RATIO_STORAGE, nuevo.toFixed(3));
+        actualizarMedidor();
+      }
+
+      function estimarTokens(t) { return Math.ceil((t || '').length / ratioCaracteres()); }
+
+      // Salida típica medida: la solución paso a paso es ~900 tokens de los ~2.400
+      // que ocupa un objeto completo. Sin ella basta con la mitad.
+      function salidaTipica() { return incluirSolucion ? 2450 : 1550; }
       // Por debajo de esto el JSON se corta a mitad y Groq responde
       // "Failed to validate JSON": no vale la pena ni enviar la peticion.
       const MINIMO_SALIDA = 1400;
       function presupuestoSalida(tokensEntrada) {
-        const margen = 300;
+        // Con el estimador ya calibrado contra el consumo real de Groq el margen
+        // puede ser pequeño; mientras no lo esté, conviene ser prudente.
+        const margen = ratioCalibrado() ? 250 : 600;
         const disponible = getTpmLimit() - tokensEntrada - margen;
         return Math.max(700, Math.min(3000, disponible));
       }
@@ -1065,13 +1352,14 @@ e.g. Converting between scientific and decimal notation with negative exponents�
       function renderTablaCarga() {
         const cont = document.getElementById('tablaCarga');
         if (!cont) return;
-        const limite = getTpmLimit();
-        const modelo = (document.getElementById('modelSelect') || {}).value || 'the selected model';
+        const modelo = modeloActual();
+        const medido = tpmMedido(modelo);
+        const limite = getTpmLimit(modelo);
 
         let filas = '';
         COMBINACIONES.forEach(function (c) {
           const entrada = costeCombinacion(c.cat, c.tipo, c.desc);
-          const total   = entrada + SALIDA_TIPICA;
+          const total   = entrada + salidaTipica();
           let clase, texto;
           if (total <= limite * 0.8)   { clase = 'ok';   texto = 'Comfortable'; }
           else if (total <= limite)    { clase = 'warn'; texto = 'Tight'; }
@@ -1082,8 +1370,13 @@ e.g. Converting between scientific and decimal notation with negative exponents�
 
         cont.innerHTML =
           '<table class="tabla-cuota">' +
-            '<caption>Estimated request size by combination, measured against ' + modelo +
-            ' and its ' + limite.toLocaleString('en') + ' tokens-per-minute limit</caption>' +
+            '<caption>Estimated request size by combination, against ' + modelo + ' and its ' +
+            limite.toLocaleString('en') + ' tokens-per-minute limit' +
+            (medido ? ' (measured from Groq\u2019s own headers)'
+                    : ' (assumed \u2014 press \uD83D\uDCCF above to measure it)') +
+            (ratioCalibrado() ? '. Token counts calibrated against your actual usage.'
+                              : '. Token counts are estimates until the first successful generation.') +
+            '</caption>' +
             '<thead><tr>' +
               '<th scope="col">Combination</th>' +
               '<th scope="col">Approx. tokens</th>' +
@@ -1106,7 +1399,7 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         const limite = getTpmLimit();
         // El medidor razona con la salida TÍPICA, no con el techo reservado:
         // reservar el máximo haría que todo apareciera siempre "al límite".
-        const salida = SALIDA_TIPICA;
+        const salida = salidaTipica();
         const total  = entrada + salida;
         const modelo = (document.getElementById('modelSelect') || {}).value || 'el modelo';
 
@@ -1127,8 +1420,8 @@ e.g. Converting between scientific and decimal notation with negative exponents�
           meter.classList.add('excede');
           txt.innerHTML = '⛔ <strong>This combination does not fit the free quota.</strong> It needs about ' +
             total.toLocaleString('en') + ' tokens and ' + modelo + ' allows ' + limite.toLocaleString('en') +
-            ' per minute. Try Llama 3.3 70B, switch to an open answer, or ask for the exercise without a ' +
-            'coordinate plane or a table.';
+            ' per minute. Press \uD83D\uDCCF above to measure every model\u2019s real limit, then pick the one ' +
+            'with the most room; or ask for the exercise without a coordinate plane, a graph or a table.';
         }
 
         // Sin este enlace la tabla de carga queda escondida tras un acordeón cerrado
@@ -1878,29 +2171,33 @@ e.g. Converting between scientific and decimal notation with negative exponents�
             ? "  \"figura\": \"(OPTIONAL, only if the question relies on a graph) <svg viewBox='0 0 300 320' ...>...</svg> with a COORDINATE PLANE to exact scale following rules P0-P9: centered origin, line clipped to the frame, grid the size of the unit, labeled axes and a <desc> with the real values. The figure MUST match the generated variables, never be decorative.\"," : '',
           isMultipleChoice ? null : '  "parts": "(OPTIONAL) array ONLY for answers with SEVERAL boxes (e.g. quotient and remainder). Each part: {label, anstype, answer, showanswer, answerformat?}. If you include it (2+ parts), OMIT the top-level answer/showanswer/answerformat and do NOT put $answerbox in the question.",',
           '  "hints": ["General hint in English", "Specific hint in English"],',
-          '  "showanswer": "Final value or equation, ALREADY ROUNDED (brief). Never endless decimals.",',
-          '  "detailed_solution": "Step-by-step HTML in English for the Detailed Solution tab"',
+          (incluirSolucion
+            ? '  "showanswer": "Final value or equation, ALREADY ROUNDED (brief). Never endless decimals.",'
+            : '  "showanswer": "Final value or equation, ALREADY ROUNDED (brief). Never endless decimals."'),
+          (incluirSolucion
+            ? '  "detailed_solution": "Step-by-step HTML in English for the Detailed Solution tab"'
+            : null),
           '}',
           '',
-          'DETAILED SOLUTION - HTML FORMAT:',
-          'Valid HTML with numbered steps, in English. Backticks for IMathAS formulas.',
-          'Example for -$a + $b:',
-          '  <p><b>RULE:</b> When adding numbers with different signs, subtract the absolute',
-          '  values. The result takes the sign of the larger one.</p>',
-          '  <p>Step 1: Identify the absolute values: `|-$a| = $a` and `|$b| = $b`</p>',
-          '  <p>Step 2: Subtract the smaller from the larger: `$b - $a = $result`</p>',
-          '  <p>Step 3: The larger is `$b` (positive), so the result is positive: `$result`</p>',
+          (incluirSolucion ? 'DETAILED SOLUTION - HTML FORMAT:' : 'DO NOT include a "detailed_solution" field: it is not wanted this time.'),
+          (incluirSolucion ? 'Valid HTML with numbered steps, in English. Backticks for IMathAS formulas.' : null),
+          (incluirSolucion ? 'Example for -$a + $b:' : null),
+          (incluirSolucion ? '  <p><b>RULE:</b> When adding numbers with different signs, subtract the absolute' : null),
+          (incluirSolucion ? '  values. The result takes the sign of the larger one.</p>' : null),
+          (incluirSolucion ? '  <p>Step 1: Identify the absolute values: `|-$a| = $a` and `|$b| = $b`</p>' : null),
+          (incluirSolucion ? '  <p>Step 2: Subtract the smaller from the larger: `$b - $a = $result`</p>' : null),
+          (incluirSolucion ? '  <p>Step 3: The larger is `$b` (positive), so the result is positive: `$result`</p>' : null),
           '',
-          'Rules for detailed_solution:',
-          '- Use IMathAS variables ($a, $b, etc.) so the values stay random',
-          '- Number every step clearly with <p>Step N: ...</p>',
-          '- Open with the mathematical RULE or CONCEPT in <b>bold</b>',
+          (incluirSolucion ? 'Rules for detailed_solution:' : null),
+          (incluirSolucion ? '- Use IMathAS variables ($a, $b, etc.) so the values stay random' : null),
+          (incluirSolucion ? '- Number every step clearly with <p>Step N: ...</p>' : null),
+          (incluirSolucion ? '- Open with the mathematical RULE or CONCEPT in <b>bold</b>' : null),
           '- Formulas in PURE AsciiMath backticks (a/b, xx for times, sqrt(x)).',
           '  NEVER use LaTeX or backslashes: \\frac, \\times, \\div, \\cdot break the question',
           '  ("unexpected token \\" and "unquoted string times" warnings). This applies in',
           '  detailed_solution exactly as in pregunta and showanswer: one single \\ anywhere',
           '  brings the whole thing down.',
-          '- Do NOT state the obvious final answer \u2014 the student must reach it'
+          (incluirSolucion ? '- Do NOT state the obvious final answer \u2014 the student must reach it' : null)
         ];
         return lines.filter(l => l !== null && l !== undefined).join('\n');
       }
@@ -1961,7 +2258,9 @@ e.g. Converting between scientific and decimal notation with negative exponents�
           isGeometry ? '- INCLUDE an SVG figure' : '',
           '',
           'Reply with valid JSON only, no extra text.',
-          'ALWAYS include detailed_solution with step-by-step HTML in English using IMathAS variables.'
+          (incluirSolucion
+            ? 'ALWAYS include detailed_solution with step-by-step HTML in English using IMathAS variables.'
+            : 'Do NOT write a "detailed_solution" field. Keep the reply as short as the schema allows.')
         ];
         return lines.filter(l => l !== null && l !== undefined).join('\n');
       }
@@ -2914,7 +3213,9 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         document.getElementById('htmlOutput').textContent = html;
 
         // Detailed Solution tab
-        const sol = resultData.detailed_solution || '';
+        const sol = resultData.detailed_solution ||
+          '(No worked solution was requested for this exercise. Switch "Worked solution" to '
+          + '"Include" and generate again if you want one — it costs about 900 extra tokens.)';
         document.getElementById('solutionOutput').textContent = sol;
 
         // Preview
