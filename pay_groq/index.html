@@ -1,1 +1,523 @@
+<!DOCTYPE html>
+<!--
+  Why the MyOpenMath generator needs a paid Groq plan - Briefing for instructors
+  © José M. Fernández, ABE/ASE Math Master Teacher,
+  Harry S. Truman College — City Colleges of Chicago
+  License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+  (CC BY-NC-SA 4.0) — https://creativecommons.org/licenses/by-nc-sa/4.0/
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Why the question generator needs a paid Groq plan</title>
+    <meta name="description" content="A briefing for instructors: what the free Groq tier can and cannot do with the MyOpenMath question generator, what the paid plan costs, and how billing works." />
+    <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />
+    <meta name="license" content="CC BY-NC-SA 4.0" />
+    <link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='6' fill='%23ffffff' stroke='%23002060' stroke-width='6'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-size='40' font-weight='bold' text-anchor='middle' fill='%23002060'%3E%C3%91%3C/text%3E%3C/svg%3E" />
+    <style>
+      :root {
+        --tema:     #1e40af;
+        --tema-d:   #002060;
+        --tema-bg:  #eef2f9;
+        --tema-bg2: #dde5f2;
+        --acento:   #5C3900;
+        --acento-bg:#fdf3e3;
+        --txt:      #222222;
+        --txt-2:    #555555;
+        --bg:       #f5f7fa;
+        --borde:    #c7d0e0;
+        --ok:       #044726;
+        --ok-bg:    #e8f4ec;
+        --no:       #8a1c1c;
+        --no-bg:    #fbeaea;
+      }
 
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 0 1rem 3rem;
+        background: var(--bg);
+        color: var(--txt);
+        font-family: Lato, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .envoltura {
+        max-width: 54rem;
+        margin: 1.5rem auto 0;
+        background: #ffffff;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 2rem 2.25rem 2.5rem;
+      }
+
+      .kicker { text-align: center; font-size: 0.82rem; color: var(--tema); font-weight: 700; margin: 0; }
+      .kicker-2 { text-align: center; font-size: 0.82rem; color: var(--txt-2); margin: 0.15rem 0 1.4rem; }
+
+      h1 { font-size: 1.8rem; line-height: 1.25; color: var(--tema-d); text-align: center; margin: 0 0 0.4rem; }
+      .subtitulo { text-align: center; color: var(--txt-2); margin: 0 0 1.6rem; font-size: 1.02rem; }
+
+      h2 { font-size: 1.15rem; color: var(--tema-d); margin: 0; }
+      h3 { font-size: 1rem; color: var(--tema); margin: 1.3rem 0 0.3rem; }
+
+      p { margin: 0 0 0.85rem; }
+      a { color: var(--tema); }
+      a:focus-visible, summary:focus-visible, button:focus-visible {
+        outline: 3px solid var(--acento);
+        outline-offset: 2px;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.92em;
+        background: var(--tema-bg);
+        color: var(--tema-d);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+
+      .resumen {
+        border: 2px solid var(--tema);
+        border-radius: 10px;
+        padding: 1.1rem 1.3rem;
+        margin: 0 0 1.6rem;
+        background: var(--tema-bg);
+      }
+      .resumen h2 { margin-bottom: 0.5rem; }
+      .resumen ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+      .resumen li { margin-bottom: 0.45rem; }
+      .resumen p:last-child { margin-bottom: 0; }
+
+      .controles { display: flex; gap: 0.6rem; margin: 0 0 1rem; flex-wrap: wrap; }
+      .btn-control {
+        font: inherit; font-size: 0.88rem; font-weight: 600;
+        color: var(--tema-d); background: var(--tema-bg);
+        border: 1px solid var(--borde); border-radius: 8px;
+        padding: 0.4rem 0.9rem; cursor: pointer;
+      }
+      .btn-control:hover { background: var(--tema-bg2); }
+
+      details.seccion {
+        border: 1px solid var(--borde); border-radius: 10px;
+        margin-bottom: 0.85rem; background: #ffffff; overflow: hidden;
+      }
+      details.seccion > summary {
+        cursor: pointer; list-style: none;
+        padding: 0.9rem 1.1rem; background: var(--tema-bg);
+        display: flex; align-items: center; gap: 0.75rem;
+      }
+      details.seccion > summary::-webkit-details-marker { display: none; }
+      details.seccion > summary::after {
+        content: "\25B6"; margin-left: auto; color: var(--tema);
+        font-size: 0.8rem; transition: transform 0.15s ease;
+      }
+      details.seccion[open] > summary::after { transform: rotate(90deg); }
+      details.seccion > summary:hover { background: var(--tema-bg2); }
+
+      .circulo {
+        flex: 0 0 auto; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+        background: var(--tema); color: #ffffff; font-weight: 700; font-size: 0.92rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+
+      .cuerpo { padding: 0.9rem 1.25rem 1.2rem; }
+
+      table { width: 100%; border-collapse: collapse; margin: 0.9rem 0 1.2rem; font-size: 0.92rem; }
+      caption {
+        caption-side: top; text-align: left; font-size: 0.85rem;
+        color: var(--txt-2); padding-bottom: 0.45rem;
+      }
+      th, td { border: 1px solid var(--borde); padding: 0.45rem 0.7rem; text-align: left; }
+      thead th { background: var(--tema-bg); color: var(--tema-d); }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      td.si { color: var(--ok); font-weight: 700; }
+      td.no { color: var(--no); font-weight: 700; }
+
+      .caja {
+        border-left: 4px solid var(--tema); background: var(--tema-bg);
+        border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin: 1.1rem 0;
+      }
+      .caja h3 { margin: 0 0 0.3rem; color: var(--tema-d); font-size: 0.98rem; }
+      .caja p:last-child { margin-bottom: 0; }
+      .caja.aviso { border-left-color: var(--acento); background: var(--acento-bg); }
+      .caja.aviso h3 { color: var(--acento); }
+      .caja.ok { border-left-color: var(--ok); background: var(--ok-bg); }
+      .caja.ok h3 { color: var(--ok); }
+
+      ul.vinetas { margin: 0.3rem 0 0.9rem; padding-left: 1.3rem; }
+      ul.vinetas li { margin-bottom: 0.4rem; }
+
+      footer {
+        margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--borde);
+        text-align: center; font-size: 0.88rem; color: var(--txt-2);
+      }
+      footer .autor { font-weight: 700; color: var(--tema-d); font-size: 0.98rem; }
+      footer p { margin: 0.2rem 0; }
+
+      @media (max-width: 34rem) {
+        .envoltura { padding: 1.25rem 1.1rem 1.75rem; }
+        h1 { font-size: 1.4rem; }
+        table { font-size: 0.84rem; }
+        th, td { padding: 0.35rem 0.45rem; }
+      }
+
+      @media print {
+        body { background: #ffffff; padding: 0; }
+        .envoltura { border: none; max-width: none; margin: 0; padding: 0; }
+        .controles { display: none; }
+        details.seccion > summary::after { display: none; }
+        details { break-inside: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="envoltura">
+      <p class="kicker">GEDparaHispanos.com</p>
+      <p class="kicker-2">Truman College &middot; City Colleges of Chicago &nbsp;|&nbsp; Briefing for instructors</p>
+
+      <h1>Why the question generator needs a paid Groq plan</h1>
+      <p class="subtitulo">What the free tier can and cannot do, what the paid plan actually costs, and how the billing works &mdash; so the department can decide</p>
+
+      <div class="resumen">
+        <h2>The short version</h2>
+        <ul>
+          <li>The MyOpenMath generator works on the free plan for <strong>arithmetic, algebra and numerical statistics</strong>, mostly as multiple choice.</li>
+          <li>It <strong>cannot</strong> produce anything with a coordinate plane, a line graph, a scatter plot or a geometric figure with axes. Those requests are refused before they are sent.</li>
+          <li>This is a throughput limit, not a quality limit. The paid plan removes it completely.</li>
+          <li>There is <strong>no subscription and no monthly fee</strong>. You are billed per token used.</li>
+          <li>Measured cost: about <strong>$0.19 per 100 questions</strong>. A full 200-question course bank costs roughly <strong>40 cents</strong>.</li>
+        </ul>
+        <p style="margin-top:0.7rem;">Everything below is measured from this tool against Groq's own API, not estimated.</p>
+      </div>
+
+      <div class="controles">
+        <button type="button" class="btn-control" id="abrirTodo">Expand all</button>
+        <button type="button" class="btn-control" id="cerrarTodo">Collapse all</button>
+      </div>
+
+      <!-- 1 -->
+      <details class="seccion" id="section-1" open>
+        <summary>
+          <span class="circulo" aria-hidden="true">1</span>
+          <h2>Why this tool is unusually demanding</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Most AI tools send the model a short instruction: <em>&ldquo;write five questions about
+            fractions.&rdquo;</em> This one cannot. MyOpenMath questions are not plain text &mdash; they are
+            <strong>algorithmic code</strong>. Every number in the question is generated at random when a student
+            opens it, so thirty students get thirty different versions of the same exercise, and the answer key is
+            computed rather than stored.
+          </p>
+          <p>
+            Writing that code correctly requires the model to follow a long list of rules about the IMathAS
+            language MyOpenMath uses: which functions exist, which loop syntax is legal, how to keep a fraction from
+            coming out as 6/8, how to avoid a division by zero on the one random draw in fifty that would produce
+            it, how to label a figure so the values are not blank. Each of those rules exists because it was a real
+            bug in a real classroom.
+          </p>
+          <p>
+            That rulebook travels with <strong>every single request</strong>. The model has no memory between
+            questions. So a request that produces one exercise carries roughly 4,400 to 6,900 tokens of rules before
+            the model writes a single character.
+          </p>
+
+          <table>
+            <caption>Measured size of one request, by type of question</caption>
+            <thead>
+              <tr>
+                <th scope="col">Question requested</th>
+                <th scope="col">Rules sent</th>
+                <th scope="col">Answer needed</th>
+                <th scope="col">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Arithmetic or algebra, multiple choice</td><td class="num">4,402</td><td class="num">1,550</td><td class="num">5,952</td></tr>
+              <tr><td>Statistics with a data table</td><td class="num">4,931</td><td class="num">1,550</td><td class="num">6,481</td></tr>
+              <tr><td>Algebra, open answer</td><td class="num">5,626</td><td class="num">1,550</td><td class="num">7,176</td></tr>
+              <tr><td>Geometry with a figure</td><td class="num">6,088</td><td class="num">1,550</td><td class="num">7,638</td></tr>
+              <tr><td>Anything with a coordinate plane or graph</td><td class="num">6,894</td><td class="num">2,450</td><td class="num">9,344</td></tr>
+            </tbody>
+          </table>
+
+          <p>
+            The tool already trims what it can. The coordinate-plane rules are sent only when the exercise actually
+            involves axes; the table rules only when it involves a table; the worked solution is optional and off by
+            default. The figures above are after all of that trimming.
+          </p>
+        </div>
+      </details>
+
+      <!-- 2 -->
+      <details class="seccion" id="section-2">
+        <summary>
+          <span class="circulo" aria-hidden="true">2</span>
+          <h2>What the free plan allows, and where it stops</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Groq's free plan does not cap how much you can use in a month. It caps how much you can send
+            <strong>in any one minute</strong>. For the models currently available, that ceiling is
+            <strong>8,000 tokens per minute</strong> &mdash; and it counts the request and the reply together.
+          </p>
+          <p>
+            Compare that to the table above and the arithmetic is unforgiving: a 6,894-token request plus a
+            2,450-token answer is 9,344 against a ceiling of 8,000. It does not fit, and no amount of waiting helps,
+            because the problem is the size of a single request rather than the total for the day.
+          </p>
+
+          <table>
+            <caption>What the free plan can and cannot generate</caption>
+            <thead>
+              <tr>
+                <th scope="col">Type of exercise</th>
+                <th scope="col">Free plan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Arithmetic: percent, fractions, ratios, rate and time</td><td class="si">Works</td></tr>
+              <tr><td>Algebra: equations, inequalities, exponents, factoring</td><td class="si">Works</td></tr>
+              <tr><td>Statistics: mean, median, mode, probability, frequency tables</td><td class="si">Works</td></tr>
+              <tr><td>Geometry: area, perimeter, volume, Pythagorean theorem</td><td class="si">Works, multiple choice only</td></tr>
+              <tr><td>Step-by-step worked solutions</td><td class="si">Works on the lighter types</td></tr>
+              <tr><td>Slope, intercepts, graphing a line</td><td class="no">Refused</td></tr>
+              <tr><td>Coordinate plane, scatter plots, line graphs</td><td class="no">Refused</td></tr>
+              <tr><td>Functions with a graph</td><td class="no">Refused</td></tr>
+            </tbody>
+          </table>
+
+          <div class="caja aviso">
+            <h3>One more practical limit</h3>
+            <p>
+              The ceiling is a rolling minute, so even a request that fits will fail if you generate two in quick
+              succession. On the free plan you can produce roughly one question per minute. Building a
+              thirty-question bank means sitting there for half an hour.
+            </p>
+          </div>
+
+          <p>
+            A second constraint is worth naming plainly: Groq's catalogue changes. The models this tool originally
+            recommended were retired in June 2026 and replaced by ones with a smaller per-minute allowance. The free
+            plan is a place to evaluate a tool, not a foundation to build a course on.
+          </p>
+        </div>
+      </details>
+
+      <!-- 3 -->
+      <details class="seccion" id="section-3">
+        <summary>
+          <span class="circulo" aria-hidden="true">3</span>
+          <h2>What the paid plan costs</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Groq's paid tier is called <strong>Developer</strong>. It raises the per-minute ceiling from 8,000
+            tokens to roughly <strong>250,000&ndash;300,000</strong>, which removes this constraint entirely: every
+            question type in the table above becomes available, and you can generate continuously instead of once a
+            minute.
+          </p>
+          <p>
+            Pricing for the model this tool uses, GPT-OSS 120B, is <strong>$0.15 per million input tokens</strong>
+            and <strong>$0.60 per million output tokens</strong>. Applying those rates to the measured request sizes
+            gives the real cost of a question:
+          </p>
+
+          <table>
+            <caption>Cost per question at Groq's published GPT-OSS 120B rates</caption>
+            <thead>
+              <tr>
+                <th scope="col">Question type</th>
+                <th scope="col">One question</th>
+                <th scope="col">100 questions</th>
+                <th scope="col">1,000 questions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Arithmetic or algebra, multiple choice</td><td class="num">$0.0016</td><td class="num">$0.16</td><td class="num">$1.59</td></tr>
+              <tr><td>The same, with a worked solution</td><td class="num">$0.0022</td><td class="num">$0.22</td><td class="num">$2.16</td></tr>
+              <tr><td>Statistics with a data table</td><td class="num">$0.0017</td><td class="num">$0.17</td><td class="num">$1.67</td></tr>
+              <tr><td>Geometry with a figure</td><td class="num">$0.0018</td><td class="num">$0.18</td><td class="num">$1.84</td></tr>
+              <tr><td>Coordinate plane or graph, with solution</td><td class="num">$0.0025</td><td class="num">$0.25</td><td class="num">$2.50</td></tr>
+              <tr><td><strong>Average across all types</strong></td><td class="num"><strong>$0.0019</strong></td><td class="num"><strong>$0.19</strong></td><td class="num"><strong>$1.92</strong></td></tr>
+            </tbody>
+          </table>
+
+          <div class="caja ok">
+            <h3>What that means in practice</h3>
+            <p>
+              You would have to generate <strong>519 questions to spend one dollar</strong>. A 200-question bank
+              covering a full course costs about <strong>38 cents</strong>. A department of six instructors each
+              building a bank per term would spend somewhere in the region of two to three dollars a year.
+            </p>
+          </div>
+
+          <p>
+            Two discounts apply automatically and lower this further. Groq caches repeated prompt content and
+            charges half rate on cache hits &mdash; and this tool sends the same rulebook every time, so the cache
+            hit rate is high. Choosing the smaller GPT-OSS 20B model instead halves the rates again. The 200-question
+            bank drops to about 31 cents with caching, or 20 cents on the smaller model.
+          </p>
+        </div>
+      </details>
+
+      <!-- 4 -->
+      <details class="seccion" id="section-4">
+        <summary>
+          <span class="circulo" aria-hidden="true">4</span>
+          <h2>How the billing actually works</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            This is the part worth understanding before anyone approves anything, because it does not work like a
+            software subscription.
+          </p>
+          <ul class="vinetas">
+            <li><strong>No monthly fee and no seats.</strong> There is no per-user licence and no minimum. You are charged only for tokens actually used.</li>
+            <li><strong>Nothing changes about the tool.</strong> It is the same file, the same key field, the same buttons. Upgrading only changes the rate limits attached to the account.</li>
+            <li><strong>Usage is charged to a payment method on the account.</strong> Groq's console shows spending as it accrues, so there are no surprises at month end.</li>
+            <li><strong>Limits apply per organization, not per key.</strong> If several instructors share one departmental account, they share the 250,000-token minute &mdash; which is still around thirty questions per minute across the whole department.</li>
+            <li><strong>The free plan does not disappear.</strong> An instructor who does not need graphing questions can stay on it indefinitely at zero cost.</li>
+          </ul>
+
+          <div class="caja">
+            <h3>Two ways to organise it</h3>
+            <p>
+              <strong>One departmental account.</strong> A single key, one small charge, everyone shares the
+              allowance. Simplest to approve and to track, and the per-minute ceiling is generous enough that
+              instructors will not notice each other.
+            </p>
+            <p>
+              <strong>Individual accounts.</strong> Each instructor holds their own key and their own (tiny) bill.
+              More administrative work for an amount of money that rounds to nothing, but it keeps usage clearly
+              attributable.
+            </p>
+          </div>
+
+          <p>
+            Whichever route is chosen, the sum involved is small enough that the real decision is not financial. It
+            is whether the department wants graphing and coordinate-plane questions in its MyOpenMath banks. If the
+            answer is no, the free plan is genuinely sufficient and nothing needs to be spent.
+          </p>
+        </div>
+      </details>
+
+      <!-- 5 -->
+      <details class="seccion" id="section-5">
+        <summary>
+          <span class="circulo" aria-hidden="true">5</span>
+          <h2>The honest case against paying</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            A recommendation is worth less if it only argues one side, so here is the case for doing nothing.
+          </p>
+          <ul class="vinetas">
+            <li>
+              <strong>Most of a GED math course does not need graphs.</strong> Percent, fractions, ratios,
+              equations, area and volume, mean and median &mdash; all of that already works for free. If your banks
+              are mostly computational, paying buys you convenience rather than capability.
+            </li>
+            <li>
+              <strong>The free plan's real cost is your time, not money.</strong> One question per minute is slow,
+              but a thirty-question bank is half an hour of background work you can do while grading.
+            </li>
+            <li>
+              <strong>Graphing questions can come from elsewhere.</strong> MyOpenMath's shared library already
+              contains thousands of graphing items written by other instructors, and they are free.
+            </li>
+            <li>
+              <strong>Any external service can change.</strong> Groq retired two models in June 2026 with a few
+              weeks' notice. Building a workflow that depends on one vendor carries a maintenance cost that a
+              two-dollar bill does not capture.
+            </li>
+          </ul>
+          <p>
+            The case for paying is narrower than the price suggests: it is worth it if you specifically want
+            algorithmic, auto-graded, randomized <em>graphing</em> questions in your own words, and want them
+            quickly. If that describes your course, forty cents is not a decision. If it does not, stay on the free
+            plan with a clear conscience.
+          </p>
+        </div>
+      </details>
+
+      <!-- 6 -->
+      <details class="seccion" id="section-6">
+        <summary>
+          <span class="circulo" aria-hidden="true">6</span>
+          <h2>Where these numbers come from</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            The token counts are not estimates. The generator asks Groq how large each request actually was and
+            stores the answer, and it reads each model's real per-minute ceiling from Groq's own response headers
+            rather than from anything written into the code. If you open the tool and press the ruler button beside
+            the model list, it will measure your account and show you the same table for your own key.
+          </p>
+          <p>
+            The prices are Groq's published rates for GPT-OSS 120B as of August 2026. Rates and rate limits both
+            change; before committing anything, confirm the current figures at
+            <a href="https://groq.com/pricing" target="_blank" rel="noopener">groq.com/pricing</a> and
+            <a href="https://console.groq.com/docs/rate-limits" target="_blank" rel="noopener">console.groq.com/docs/rate-limits</a>.
+          </p>
+          <p>
+            If anything here does not match what you see on your own account, please say so &mdash; the numbers in
+            this document are only useful if they are current.
+          </p>
+        </div>
+      </details>
+
+      <footer>
+        <p class="autor">Prof. Jos&eacute; M. Fern&aacute;ndez (Zhema)</p>
+        <p>ABE/ASE Math Master Teacher</p>
+        <p>Harry S. Truman College &middot; City Colleges of Chicago</p>
+        <p>GEDparaHispanos.com</p>
+        <p style="margin-top:0.9rem;">
+          Prepared for colleagues evaluating the MyOpenMath question generator.
+        </p>
+        <p>
+          Licensed under
+          <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license" target="_blank">CC BY-NC-SA 4.0</a>
+          &middot; August 2026 &middot; Version 1.0
+        </p>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        var secciones = document.querySelectorAll('details.seccion');
+
+        function fijar(estado) {
+          secciones.forEach(function (d) { d.open = estado; });
+        }
+        document.getElementById('abrirTodo').addEventListener('click', function () { fijar(true); });
+        document.getElementById('cerrarTodo').addEventListener('click', function () { fijar(false); });
+
+        function abrirPorHash() {
+          var id = window.location.hash.replace('#', '');
+          if (!id) return;
+          var destino = document.getElementById(id);
+          if (!destino) return;
+          var padre = destino.closest('details');
+          while (padre) { padre.open = true; padre = padre.parentElement.closest('details'); }
+          destino.scrollIntoView();
+        }
+        window.addEventListener('hashchange', abrirPorHash);
+        abrirPorHash();
+
+        var previo = [];
+        window.addEventListener('beforeprint', function () {
+          previo = [];
+          secciones.forEach(function (d, i) { previo[i] = d.open; d.open = true; });
+        });
+        window.addEventListener('afterprint', function () {
+          secciones.forEach(function (d, i) { d.open = previo[i]; });
+        });
+      })();
+    </script>
+  </body>
+</html>
