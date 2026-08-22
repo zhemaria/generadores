@@ -1,1 +1,632 @@
+<!DOCTYPE html>
+<!--
+  Cómo configurar su clave API de Groq - Guía técnica para docentes
+  © José M. Fernández, ABE/ASE Math Master Teacher,
+  Harry S. Truman College — City Colleges of Chicago
+  Licencia: Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional
+  (CC BY-NC-SA 4.0) — https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es
+-->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cómo configurar su clave API de Groq — Guía para docentes</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
+<meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago">
+    <meta name="description" content="Guía paso a paso para el profesorado: cómo obtener una clave gratuita de Groq y configurarla en los generadores de cuestionarios de Matemáticas y Artes del Lenguaje para Brightspace." />
+    <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />
+    <meta name="license" content="CC BY-NC-SA 4.0" />
+    <link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='6' fill='%23ffffff' stroke='%23002060' stroke-width='6'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-size='40' font-weight='bold' text-anchor='middle' fill='%23002060'%3E%C3%91%3C/text%3E%3C/svg%3E" />
+    <style>
+      :root {
+        --tema:     #1e40af;
+        --tema-d:   #002060;
+        --tema-bg:  #eef2f9;
+        --tema-bg2: #dde5f2;
+        --acento:   #5C3900;
+        --acento-bg:#fdf3e3;
+        --txt:      #222222;
+        --txt-2:    #555555;
+        --bg:       #f5f7fa;
+        --borde:    #c7d0e0;
+        --ok:       #044726;
+        --ok-bg:    #e8f4ec;
+      }
 
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 0 1rem 3rem;
+        background: var(--bg);
+        color: var(--txt);
+        font-family: Lato, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .envoltura {
+        max-width: 52rem;
+        margin: 1.5rem auto 0;
+        background: #ffffff;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 2rem 2.25rem 2.5rem;
+      }
+
+      .kicker {
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--tema);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin: 0;
+      }
+      .kicker-2 {
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--txt-2);
+        margin: 0.15rem 0 1.4rem;
+      }
+
+      h1 {
+        font-size: 1.85rem;
+        line-height: 1.25;
+        color: var(--tema-d);
+        text-align: center;
+        margin: 0 0 0.4rem;
+      }
+      .subtitulo {
+        text-align: center;
+        color: var(--txt-2);
+        margin: 0 0 1.8rem;
+        font-size: 1.02rem;
+      }
+
+      h2 { font-size: 1.15rem; color: var(--tema-d); margin: 0; }
+      h3 { font-size: 1rem; color: var(--tema); margin: 1.3rem 0 0.3rem; }
+
+      p { margin: 0 0 0.85rem; }
+      a { color: var(--tema); }
+      a:focus-visible,
+      summary:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--acento);
+        outline-offset: 2px;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.92em;
+        background: var(--tema-bg);
+        color: var(--tema-d);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+
+      /* ── Acordeones ─────────────────────────────────────────── */
+      .controles {
+        display: flex;
+        gap: 0.6rem;
+        margin: 0 0 1rem;
+        flex-wrap: wrap;
+      }
+      .btn-control {
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--tema-d);
+        background: var(--tema-bg);
+        border: 1px solid var(--borde);
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+      }
+      .btn-control:hover { background: var(--tema-bg2); }
+
+      details.seccion {
+        border: 1px solid var(--borde);
+        border-radius: 10px;
+        margin-bottom: 0.85rem;
+        background: #ffffff;
+        overflow: hidden;
+      }
+      details.seccion > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 0.9rem 1.1rem;
+        background: var(--tema-bg);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      details.seccion > summary::-webkit-details-marker { display: none; }
+      details.seccion > summary::after {
+        content: "\25B6";
+        margin-left: auto;
+        color: var(--tema);
+        font-size: 0.8rem;
+        transition: transform 0.15s ease;
+      }
+      details.seccion[open] > summary::after { transform: rotate(90deg); }
+      details.seccion > summary:hover { background: var(--tema-bg2); }
+
+      .circulo {
+        flex: 0 0 auto;
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 50%;
+        background: var(--tema);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.92rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cuerpo { padding: 0.9rem 1.25rem 1.2rem; }
+
+      /* ── Pasos numerados ────────────────────────────────────── */
+      ol.pasos {
+        list-style: none;
+        counter-reset: paso 0;
+        margin: 0.4rem 0 0;
+        padding: 0;
+      }
+      ol.pasos.continua { counter-reset: paso 4; }
+
+      ol.pasos > li {
+        counter-increment: paso;
+        position: relative;
+        padding: 0 0 1.1rem 3rem;
+        min-height: 2.2rem;
+      }
+      ol.pasos > li::before {
+        content: counter(paso);
+        position: absolute;
+        left: 0;
+        top: 0.15rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 6px;
+        background: var(--tema);
+        color: #ffffff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      ol.pasos .paso-t {
+        display: block;
+        font-weight: 700;
+        color: var(--tema-d);
+        margin-bottom: 0.15rem;
+      }
+      ol.pasos p { margin: 0 0 0.5rem; }
+
+      /* ── Cajas destacadas ───────────────────────────────────── */
+      .caja {
+        border-left: 4px solid var(--tema);
+        background: var(--tema-bg);
+        border-radius: 0 8px 8px 0;
+        padding: 0.9rem 1.1rem;
+        margin: 1.1rem 0;
+      }
+      .caja h3 { margin: 0 0 0.3rem; color: var(--tema-d); font-size: 0.98rem; }
+      .caja p:last-child { margin-bottom: 0; }
+
+      .caja.aviso { border-left-color: var(--acento); background: var(--acento-bg); }
+      .caja.aviso h3 { color: var(--acento); }
+
+      .caja.ok { border-left-color: var(--ok); background: var(--ok-bg); }
+      .caja.ok h3 { color: var(--ok); }
+
+      ul.vinetas { margin: 0.3rem 0 0.9rem; padding-left: 1.3rem; }
+      ul.vinetas li { margin-bottom: 0.4rem; }
+
+      /* ── Preguntas frecuentes ───────────────────────────────── */
+      details.faq {
+        border-bottom: 1px solid var(--borde);
+        padding: 0.15rem 0;
+      }
+      details.faq:last-of-type { border-bottom: none; }
+      details.faq > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 0.65rem 1.6rem 0.65rem 0;
+        font-weight: 600;
+        color: var(--tema-d);
+        position: relative;
+      }
+      details.faq > summary::-webkit-details-marker { display: none; }
+      details.faq > summary::after {
+        content: "\002B";
+        position: absolute;
+        right: 0.2rem;
+        top: 0.55rem;
+        color: var(--tema);
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+      details.faq[open] > summary::after { content: "\2212"; }
+      details.faq > div { padding: 0 0 0.75rem; color: var(--txt-2); }
+      details.faq > div p:last-child { margin-bottom: 0; }
+
+      /* ── Pie ────────────────────────────────────────────────── */
+      footer {
+        margin-top: 2rem;
+        padding-top: 1.2rem;
+        border-top: 1px solid var(--borde);
+        text-align: center;
+        font-size: 0.88rem;
+        color: var(--txt-2);
+      }
+      footer .autor { font-weight: 700; color: var(--tema-d); font-size: 0.98rem; }
+      footer p { margin: 0.2rem 0; }
+
+      .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 34rem) {
+        .envoltura { padding: 1.25rem 1.1rem 1.75rem; }
+        h1 { font-size: 1.45rem; }
+        ol.pasos > li { padding-left: 2.6rem; }
+      }
+
+      @media print {
+        body { background: #ffffff; padding: 0; }
+        .envoltura { border: none; max-width: none; margin: 0; padding: 0; }
+        .controles { display: none; }
+        details.seccion > summary::after,
+        details.faq > summary::after { display: none; }
+        details { break-inside: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="envoltura">
+      <p class="kicker">GEDparaHispanos.com</p>
+      <p class="kicker-2">Truman College &middot; City Colleges of Chicago &nbsp;|&nbsp; Guía técnica para docentes</p>
+
+      <h1>Cómo configurar su clave API de Groq</h1>
+      <p class="subtitulo">Guía paso a paso para utilizar los generadores de cuestionarios de Matemáticas y Artes del Lenguaje</p>
+
+      <p>Estimado(a) colega:</p>
+      <p>
+        Los generadores de cuestionarios para Brightspace (Matemáticas y Artes del Lenguaje) utilizan
+        el modelo de inteligencia artificial Llama 3.3 70B a través de la API de la empresa Groq. Para
+        emplear estas herramientas, cada docente debe disponer de una clave personal
+        (<strong>API key</strong>), la cual se obtiene de manera completamente gratuita. El proceso
+        requiere menos de cinco minutos y no exige tarjeta de crédito ni información financiera alguna.
+      </p>
+
+      <div class="controles">
+        <button type="button" class="btn-control" id="abrirTodo">Abrir todo</button>
+        <button type="button" class="btn-control" id="cerrarTodo">Cerrar todo</button>
+      </div>
+
+      <!-- 1 ─────────────────────────────────────────────────── -->
+      <details class="seccion" id="seccion-1" open>
+        <summary>
+          <span class="circulo" aria-hidden="true">1</span>
+          <h2>¿Por qué necesito mi propia clave?</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            La clave API funciona como una identificación digital que autoriza al generador a
+            comunicarse con los servidores de inteligencia artificial en su nombre. El uso de una clave
+            personal ofrece tres ventajas fundamentales.
+          </p>
+          <ul class="vinetas">
+            <li><strong>Privacidad.</strong> Su clave se almacena únicamente en su navegador (almacenamiento local). No se transmite a ningún servidor del autor ni de la institución.</li>
+            <li><strong>Independencia.</strong> Cada docente gestiona su propio consumo, sin depender de cuotas compartidas que pudieran agotarse.</li>
+            <li><strong>Seguridad.</strong> Si en algún momento desea revocar el acceso, puede hacerlo desde su propia cuenta sin afectar a otros usuarios.</li>
+          </ul>
+
+          <div class="caja ok">
+            <h3>Servicio gratuito</h3>
+            <p>
+              El nivel gratuito de Groq ofrece un límite generoso de uso diario que resulta más que
+              suficiente para la generación habitual de cuestionarios en el aula. En condiciones
+              normales, un docente no necesitará pagar nunca por este servicio.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 2 ─────────────────────────────────────────────────── -->
+      <details class="seccion" id="seccion-2">
+        <summary>
+          <span class="circulo" aria-hidden="true">2</span>
+          <h2>Cómo obtener su clave gratuita (pasos 1 a 4)</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>Siga los pasos a continuación. Cada paso le tomará menos de un minuto.</p>
+
+          <ol class="pasos">
+            <li>
+              <span class="paso-t">Acceda al portal de Groq</span>
+              <p>
+                Abra su navegador (Chrome, Firefox o Safari) y diríjase a
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.
+                También puede buscar «Groq Console» en Google y hacer clic en el primer resultado.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Cree su cuenta gratuita</span>
+              <p>
+                En la página principal verá las opciones <strong>Sign up with Google</strong> o
+                <strong>Sign up with GitHub</strong>, así como un formulario para registrarse con correo
+                electrónico. La opción más rápida es iniciar sesión con su cuenta de Google: un solo
+                clic y queda registrado. No se solicita tarjeta de crédito en ningún momento.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Genere una nueva clave API</span>
+              <p>
+                Una vez dentro del panel, busque el botón <strong>Create API Key</strong> (crear clave
+                API). Se le pedirá un nombre descriptivo para identificar la clave; puede escribir, por
+                ejemplo, «Generador GED Truman». Haga clic en <strong>Submit</strong>.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Copie inmediatamente la clave</span>
+              <p>
+                Aparecerá una clave larga que comienza con <code>gsk_</code> seguida de muchos
+                caracteres. Cópiela completa con el botón <strong>Copy</strong> o seleccionándola con el
+                ratón. <strong>Importante:</strong> Groq solo le mostrará la clave una vez; si cierra la
+                ventana sin copiarla, deberá generar otra.
+              </p>
+            </li>
+          </ol>
+
+          <div class="caja aviso">
+            <h3>Trate su clave como una contraseña</h3>
+            <p>
+              Trate su clave como si fuera la contraseña de su correo electrónico: no la comparta con
+              nadie, no la publique en sitios web ni la envíe por canales públicos. Si sospecha que
+              alguien la conoce, puede revocarla en cualquier momento desde el portal de Groq y generar
+              una nueva.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 3 ─────────────────────────────────────────────────── -->
+      <details class="seccion" id="seccion-3">
+        <summary>
+          <span class="circulo" aria-hidden="true">3</span>
+          <h2>Cómo configurar la clave en el generador (pasos 5 a 8)</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Una vez que tenga su clave en el portapapeles, abra cualquiera de los dos generadores
+            (Matemáticas o Artes del Lenguaje) desde el sitio GEDparaHispanos.com y siga este
+            procedimiento.
+          </p>
+
+          <ol class="pasos continua">
+            <li>
+              <span class="paso-t">Localice el botón de configuración</span>
+              <p>
+                En la esquina superior derecha del generador encontrará un botón de color ámbar con un
+                icono de engranaje y la etiqueta <strong>Configurar API</strong>. Si es la primera vez
+                que abre el generador, este botón se activará automáticamente y le mostrará el
+                formulario de configuración sin necesidad de buscarlo.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Pegue su clave en el campo correspondiente</span>
+              <p>
+                En el formulario que aparece, localice el campo <strong>Pega tu clave aquí</strong> y
+                pegue su clave con Ctrl+V (Windows) o Cmd+V (Mac). Por seguridad, los caracteres se
+                mostrarán como puntos negros. Si desea verificar que pegó la clave correcta, utilice el
+                botón <strong>Mostrar/Ocultar</strong>.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Guarde la clave</span>
+              <p>
+                Haga clic en el botón <strong>Guardar clave</strong>. El sistema verificará que la clave
+                tenga el formato correcto (debe empezar con <code>gsk_</code>) y le mostrará una
+                confirmación en verde: <em>Clave guardada correctamente. Ya puedes generar preguntas.</em>
+              </p>
+              <p>
+                Si en cambio aparece un mensaje en rojo indicando que la clave debe empezar con
+                <code>gsk_</code>, lo más probable es que se haya copiado incompleta. Vuelva al portal
+                de Groq y cópiela de nuevo.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Cierre el formulario y comience a trabajar</span>
+              <p>
+                Cierre el formulario haciendo clic en la &times; de la esquina superior derecha o
+                pulsando la tecla Esc. Ya puede utilizar el generador con normalidad. La clave queda
+                guardada permanentemente en su navegador, de modo que no tendrá que pegarla cada vez que
+                use el generador.
+              </p>
+            </li>
+          </ol>
+
+          <div class="caja">
+            <h3>Una sola clave para ambos generadores</h3>
+            <p>
+              La clave que guarda en un generador (Matemáticas) se comparte automáticamente con el otro
+              generador (Artes del Lenguaje), siempre que ambos se utilicen desde el mismo navegador. No
+              es necesario configurarla dos veces.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 4 ─────────────────────────────────────────────────── -->
+      <details class="seccion" id="seccion-4">
+        <summary>
+          <span class="circulo" aria-hidden="true">4</span>
+          <h2>Preguntas frecuentes</h2>
+        </summary>
+        <div class="cuerpo">
+
+          <details class="faq">
+            <summary>¿La clave se borra si cierro el navegador?</summary>
+            <div>
+              <p>
+                No. La clave se almacena de forma permanente en el navegador hasta que usted decida
+                borrarla manualmente con el botón <strong>Borrar clave guardada</strong>, o hasta que
+                limpie los datos del navegador desde su configuración. Permanece guardada incluso si
+                apaga la computadora.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>¿Tengo que configurar la clave en cada computadora donde use el generador?</summary>
+            <div>
+              <p>
+                Sí. Como la clave se guarda en el navegador, si usted utiliza el generador desde la
+                computadora del aula y también desde su casa, deberá configurarla en ambos lugares.
+                Puede utilizar la misma clave en todos sus dispositivos.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>¿Qué ocurre si excedo el límite gratuito de Groq?</summary>
+            <div>
+              <p>
+                Groq limita tanto lo que puede enviarse en un mismo minuto como el total diario. Si
+                supera alguno de los dos, recibirá un mensaje de error indicando que se han agotado las
+                solicitudes. Bastará con esperar un minuto (o unas horas, en el caso del límite diario)
+                para que el contador se restablezca. No se genera ningún cargo automático ni hay ninguna
+                forma de pago registrada.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>¿Mi clave puede ser vista por mis estudiantes o por otros profesores?</summary>
+            <div>
+              <p>
+                No. La clave se guarda exclusivamente en su navegador y nunca se transmite a otros
+                usuarios. Si comparte el enlace del generador con sus estudiantes, ellos verán el
+                formulario para configurar su propia clave, pero nunca tendrán acceso a la suya.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>¿Puedo usar la misma clave en otros generadores que aparezcan en el futuro?</summary>
+            <div>
+              <p>
+                Sí. Cualquier herramienta que el autor desarrolle en el sitio GEDparaHispanos.com y que
+                utilice la API de Groq podrá compartir la misma clave configurada en su navegador.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Si pierdo la clave, ¿puedo recuperarla?</summary>
+            <div>
+              <p>
+                No es posible recuperar una clave perdida. Sin embargo, puede generar una nueva en
+                cualquier momento desde el portal de Groq, repitiendo el procedimiento descrito en los
+                pasos 1 a 4 de esta guía.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>El generador dice que se denegó el acceso. ¿Qué hago?</summary>
+            <div>
+              <p>
+                Ese mensaje casi siempre significa que alguna red está bloqueando
+                <code>api.groq.com</code>, no que su clave tenga algún problema. Algunas redes
+                institucionales y algunas VPN lo hacen. Pruebe el mismo archivo desde su conexión de
+                casa o desde el punto de acceso del teléfono, con la VPN desactivada; si allí funciona,
+                el bloqueo estaba en la red.
+              </p>
+            </div>
+          </details>
+
+        </div>
+      </details>
+
+      <!-- 5 ─────────────────────────────────────────────────── -->
+      <details class="seccion" id="seccion-5">
+        <summary>
+          <span class="circulo" aria-hidden="true">5</span>
+          <h2>Apoyo técnico</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Si encuentra dificultades durante el proceso de configuración o el generador no responde
+            como se espera, no dude en comunicarse con el autor del recurso para recibir apoyo
+            personalizado. Resulta útil indicar qué generador estaba utilizando, qué acción acababa de
+            realizar y el texto exacto del mensaje que apareció en pantalla.
+          </p>
+        </div>
+      </details>
+
+      <footer>
+        <p class="autor">Prof. José M. Fernández (Zhema)</p>
+        <p>ABE/ASE Math Master Teacher</p>
+        <p>Harry S. Truman College &middot; City Colleges of Chicago</p>
+        <p>GEDparaHispanos.com</p>
+        <p style="margin-top:0.9rem;">
+          Este recurso es de uso libre para docentes que trabajan con estudiantes hispanohablantes
+          preparándose para el examen GED en español.
+        </p>
+        <p>
+          Obra bajo licencia
+          <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" rel="license" target="_blank">CC BY-NC-SA 4.0</a>
+          &middot; Edición en HTML &middot; agosto de 2026 &middot; Versión 1.1
+        </p>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        var secciones = document.querySelectorAll('details.seccion, details.faq');
+
+        function fijar(estado) {
+          secciones.forEach(function (d) { d.open = estado; });
+        }
+
+        document.getElementById('abrirTodo').addEventListener('click', function () { fijar(true); });
+        document.getElementById('cerrarTodo').addEventListener('click', function () { fijar(false); });
+
+        // Los enlaces directos del tipo ...#seccion-3 abren esa sección y bajan hasta ella.
+        function abrirPorHash() {
+          var id = window.location.hash.replace('#', '');
+          if (!id) return;
+          var destino = document.getElementById(id);
+          if (!destino) return;
+          var padre = destino.closest('details');
+          while (padre) { padre.open = true; padre = padre.parentElement.closest('details'); }
+          destino.scrollIntoView();
+        }
+        window.addEventListener('hashchange', abrirPorHash);
+        abrirPorHash();
+
+        // Al imprimir no puede quedar contenido oculto: se abre todo y luego se restaura.
+        var previo = [];
+        window.addEventListener('beforeprint', function () {
+          previo = [];
+          secciones.forEach(function (d, i) { previo[i] = d.open; d.open = true; });
+        });
+        window.addEventListener('afterprint', function () {
+          secciones.forEach(function (d, i) { d.open = previo[i]; });
+        });
+      })();
+    </script>
+  </body>
+</html>
