@@ -12,9 +12,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyOpenMath Question Generator - GED Math (Groq)</title>
-    <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
-<meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
+       <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />    
     <meta name="license" content="CC BY-NC-SA 4.0" />
     <link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -300,6 +299,11 @@
         line-height: 1.6;
         color: var(--text-secondary);
       }
+      .lea-primero {
+        color: var(--accent-warning);
+        letter-spacing: 0.04em;
+      }
+
       .guia-groq summary {
         cursor: pointer;
         font-weight: 600;
@@ -336,6 +340,20 @@
         background: var(--bg-tertiary);
         color: var(--text-primary);
       }
+      .ver-tabla {
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--accent-primary);
+        background: none;
+        border: none;
+        border-bottom: 1px solid var(--accent-primary);
+        padding: 0;
+        margin-left: 0.15rem;
+        cursor: pointer;
+      }
+      .ver-tabla:hover { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+
       .tabla-cuota td.ok   { color: #34d399; font-weight: 600; }
       .tabla-cuota td.warn { color: #fbbf24; font-weight: 600; }
       .tabla-cuota td.bad  { color: #f87171; font-weight: 600; }
@@ -403,8 +421,8 @@
           <span id="tpmText">Token budget: it will be calculated once you pick a category and an answer type.</span>
         </div>
 
-        <details class="guia-groq">
-          <summary>Getting your free Groq key, and what the free tier can actually do (read this first)</summary>
+        <details class="guia-groq" id="guiaGroq">
+          <summary><span class="lea-primero">READ THIS FIRST</span> &mdash; getting your free Groq key, and what the free tier can actually do</summary>
 
           <h3>Setting up your key (2 minutes)</h3>
           <ol>
@@ -422,32 +440,21 @@
 
           <p>The rulebook this tool sends the model is long, because MyOpenMath question code is unforgiving.
           It is trimmed automatically &mdash; coordinate-plane and table rules are only included when your exercise
-          actually needs them &mdash; but some combinations still do not fit. Measured on Llama 3.3 70B:</p>
+          actually needs them &mdash; but some combinations still do not fit. The table below is measured live
+          against <strong>the model you have selected above</strong>, so it changes when you change models:</p>
 
-          <table class="tabla-cuota">
-            <caption>Estimated request size by combination, against a 12,000 TPM free-tier limit</caption>
-            <thead>
-              <tr>
-                <th scope="col">Combination</th>
-                <th scope="col">Approx. tokens</th>
-                <th scope="col">Free tier</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Arithmetic or algebra &middot; multiple choice</td><td>8,000</td><td class="ok">Comfortable</td></tr>
-              <tr><td>Arithmetic or algebra &middot; open answer</td><td>9,600</td><td class="ok">Comfortable</td></tr>
-              <tr><td>Geometry &middot; multiple choice</td><td>10,200</td><td class="warn">Tight</td></tr>
-              <tr><td>Statistics with a data table</td><td>10,200</td><td class="warn">Tight</td></tr>
-              <tr><td>Geometry &middot; open answer</td><td>11,700</td><td class="warn">Tight</td></tr>
-              <tr><td>Anything with a coordinate plane, line or graph</td><td>12,700</td><td class="bad">Does not fit</td></tr>
-            </tbody>
-          </table>
+          <div id="tablaCarga"></div>
 
           <p><strong>What to do about it.</strong> &ldquo;Tight&rdquo; means it works, but wait roughly a minute between
-          generations or the second request collides with the quota. &ldquo;Does not fit&rdquo; means slopes, intercepts,
-          graphed lines and scatter plots are out of reach on the free plan &mdash; not because the tool is failing, but
-          because the rules needed to make MyOpenMath draw a correct coordinate plane are themselves larger than the
-          free minute allows.</p>
+          generations or the second request collides with the quota. &ldquo;Does not fit&rdquo; means the request is
+          larger than one free minute allows &mdash; not because the tool is failing, but because the rules that make
+          MyOpenMath produce correct question code are themselves long.</p>
+
+          <p><strong>Start with Llama 3.3 70B.</strong> If every row above says &ldquo;Does not fit&rdquo;, you are on a
+          model with a smaller quota. GPT-OSS 120B allows only 8,000 tokens per minute, which is below what even the
+          simplest exercise needs here. Open the <strong>Model</strong> list above and pick
+          <strong>Llama 3.3 70B Versatile</strong>: at 12,000 tokens per minute most combinations turn green. The
+          other models are worth trying only once you are curious, not as a starting point.</p>
 
           <p>If graphing questions matter to you, the honest answer is to add a few dollars of credit on Groq&rsquo;s
           Developer plan. It raises the ceiling to roughly 250,000&ndash;300,000 TPM, which removes this constraint
@@ -691,10 +698,10 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         const key = this.value.trim();
         if (key && key.startsWith('gsk_')) {
           localStorage.setItem('groq_api_key_mom', key);
-          document.getElementById('keyStatus').textContent = '✅ Clave guardada en este navegador.';
+          document.getElementById('keyStatus').textContent = '✅ Key saved in this browser.';
           loadModels();
         } else if (key) {
-          document.getElementById('keyStatus').textContent = '⚠️ Una clave de Groq empieza por "gsk_". Revisa que la copiaste completa.';
+          document.getElementById('keyStatus').textContent = '⚠️ A Groq key starts with "gsk_". Check that you copied it in full.';
         }
       });
 
@@ -864,6 +871,22 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         const usuario = buildUserPrompt(topicText, customDesc);
         const entrada = estimarTokens(sistema) + estimarTokens(usuario);
         let salida    = presupuestoSalida(entrada);
+
+        // A complete exercise object (code, question text, hints, worked solution) never
+        // fits in under ~1400 tokens. Below that the reply is cut off mid-JSON and Groq
+        // answers "Failed to validate JSON", which tells the instructor nothing useful.
+        // Stop here instead and say what actually has to change.
+        if (salida < MINIMO_SALIDA) {
+          const modelo = (document.getElementById('modelSelect') || {}).value || 'this model';
+          throw new Error(
+            'this combination does not fit ' + modelo + '\u2019s per-minute quota of ' +
+            getTpmLimit().toLocaleString('en') + ' tokens. The rules alone take about ' +
+            entrada.toLocaleString('en') + ', which leaves too little room for the answer. ' +
+            'Nothing was sent, so none of your quota was used. Switch to Llama 3.3 70B in the ' +
+            'Model list above, or describe the exercise without a coordinate plane, a graph or a table'
+          );
+        }
+
         let usarJsonMode = true;
         let intento = 0;
 
@@ -897,7 +920,7 @@ e.g. Converting between scientific and decimal notation with negative exponents�
             if (declarado) setTpmLimit(parseInt(declarado[1], 10));
 
             // El modelo no admite modo JSON: repetir sin él.
-            if (usarJsonMode && /response_format|json_object|json mode/i.test(msg)) {
+            if (usarJsonMode && /response_format|json_object|json mode|json_validate_failed|failed to validate json/i.test(msg)) {
               usarJsonMode = false;
               continue;
             }
@@ -956,12 +979,21 @@ e.g. Converting between scientific and decimal notation with negative exponents�
       // El manual completo de reglas ronda los 13.000 tokens, muy por encima de
       // la cuota por minuto del plan gratuito de Groq. Las secciones pesadas se
       // incluyen SOLO cuando el ejercicio pedido las necesita de verdad.
+      // descOverride permite calcular el coste de una combinación hipotética
+      // (para la tabla de carga) sin tocar lo que el docente tiene escrito.
+      let descOverride = null;
+
       function descripcionActual() {
+        if (descOverride !== null) return descOverride.toLowerCase();
         const el = document.getElementById('customDescription');
         return (el ? el.value : '').toLowerCase();
       }
-      const RX_PLANO = /plano|cartesian|coordenad|recta|rectas|pendiente|intercept|grafic|gráfic|eje |ejes|par ordenado|pares ordenados|punto|puntos|y ?= ?mx|dispersion|dispersión|linea recta|línea recta|funcion lineal|función lineal|sistema de ecuaciones/;
-      const RX_TABLA = /tabla|tablas|datos|frecuencia|encuesta|registro|columna|fila|inventario|precios|horario|promedio de la tabla/;
+
+      // Palabras clave EN INGLÉS: esta herramienta recibe descripciones en inglés.
+      // Con la lista en español, "slope of a line" no activaba las reglas del plano
+      // y el modelo dibujaba figuras rotas, que es justo lo que esas reglas evitan.
+      const RX_PLANO = /coordinate|cartesian|plane\b|slope|intercept|graph|axis|axes|ordered pair|scatter|plot\b|\bline\b|\blines\b|\bpoint\b|\bpoints\b|y ?= ?mx|linear function|system of equations/;
+      const RX_TABLA = /\btable\b|\btables\b|\bdata\b|frequency|survey|column|\brow\b|\brows\b|inventory|price list|schedule|tally/;
 
       function necesitaPlano() {
         // Geometría NO implica plano cartesiano: el área de un triángulo lleva
@@ -993,10 +1025,71 @@ e.g. Converting between scientific and decimal notation with negative exponents�
 
       // Salida típica observada para un ejercicio completo con solución detallada.
       const SALIDA_TIPICA = 2200;
+      // Por debajo de esto el JSON se corta a mitad y Groq responde
+      // "Failed to validate JSON": no vale la pena ni enviar la peticion.
+      const MINIMO_SALIDA = 1400;
       function presupuestoSalida(tokensEntrada) {
         const margen = 300;
         const disponible = getTpmLimit() - tokensEntrada - margen;
         return Math.max(700, Math.min(3000, disponible));
+      }
+
+      // Coste de una combinación hipotética, sin alterar el estado real de la
+      // pantalla: se guardan categoría, tipo y descripción, y se restauran siempre.
+      function costeCombinacion(cat, tipo, desc) {
+        const cat0 = currentCategory, tipo0 = currentAnswerType, ov0 = descOverride;
+        currentCategory = cat; currentAnswerType = tipo; descOverride = desc;
+        let n = 0;
+        try {
+          n = estimarTokens(buildSystemPrompt()) + estimarTokens(buildUserPrompt(cat, desc));
+        } catch (e) {
+          n = 0;
+        } finally {
+          currentCategory = cat0; currentAnswerType = tipo0; descOverride = ov0;
+        }
+        return n;
+      }
+
+      const COMBINACIONES = [
+        { etq: 'Arithmetic or algebra &middot; multiple choice',        cat: 'algebra',     tipo: 'multiple', desc: '' },
+        { etq: 'Arithmetic or algebra &middot; open answer',            cat: 'algebra',     tipo: 'abierta',  desc: '' },
+        { etq: 'Geometry &middot; multiple choice',                     cat: 'geometria',   tipo: 'multiple', desc: '' },
+        { etq: 'Statistics with a data table',                          cat: 'estadistica', tipo: 'abierta',  desc: '' },
+        { etq: 'Geometry &middot; open answer',                         cat: 'geometria',   tipo: 'abierta',  desc: '' },
+        { etq: 'Anything with a coordinate plane, line or graph',       cat: 'algebra',     tipo: 'abierta',  desc: 'slope of a line on the coordinate plane' }
+      ];
+
+      // Tabla de carga calculada EN VIVO contra el modelo elegido. Una tabla fija
+      // mentiría en cuanto el docente cambiara de modelo: 12.000 y 8.000 tokens
+      // por minuto dan veredictos distintos para la misma combinación.
+      function renderTablaCarga() {
+        const cont = document.getElementById('tablaCarga');
+        if (!cont) return;
+        const limite = getTpmLimit();
+        const modelo = (document.getElementById('modelSelect') || {}).value || 'the selected model';
+
+        let filas = '';
+        COMBINACIONES.forEach(function (c) {
+          const entrada = costeCombinacion(c.cat, c.tipo, c.desc);
+          const total   = entrada + SALIDA_TIPICA;
+          let clase, texto;
+          if (total <= limite * 0.8)   { clase = 'ok';   texto = 'Comfortable'; }
+          else if (total <= limite)    { clase = 'warn'; texto = 'Tight'; }
+          else                         { clase = 'bad';  texto = 'Does not fit'; }
+          filas += '<tr><td>' + c.etq + '</td><td>' + total.toLocaleString('en') +
+                   '</td><td class="' + clase + '">' + texto + '</td></tr>';
+        });
+
+        cont.innerHTML =
+          '<table class="tabla-cuota">' +
+            '<caption>Estimated request size by combination, measured against ' + modelo +
+            ' and its ' + limite.toLocaleString('en') + ' tokens-per-minute limit</caption>' +
+            '<thead><tr>' +
+              '<th scope="col">Combination</th>' +
+              '<th scope="col">Approx. tokens</th>' +
+              '<th scope="col">This model</th>' +
+            '</tr></thead><tbody>' + filas + '</tbody>' +
+          '</table>';
       }
 
       // Medidor visible: el docente ve ANTES de generar si la combinación cabe.
@@ -1017,6 +1110,8 @@ e.g. Converting between scientific and decimal notation with negative exponents�
         const total  = entrada + salida;
         const modelo = (document.getElementById('modelSelect') || {}).value || 'el modelo';
 
+        renderTablaCarga();
+
         meter.classList.remove('ok', 'ajustado', 'excede');
         if (total <= limite * 0.8) {
           meter.classList.add('ok');
@@ -1035,7 +1130,22 @@ e.g. Converting between scientific and decimal notation with negative exponents�
             ' per minute. Try Llama 3.3 70B, switch to an open answer, or ask for the exercise without a ' +
             'coordinate plane or a table.';
         }
+
+        // Sin este enlace la tabla de carga queda escondida tras un acordeón cerrado
+        // que nadie abre, y el docente solo ve el veredicto sin saber qué SÍ cabe.
+        txt.innerHTML += ' <button type="button" class="ver-tabla" id="verTabla">' +
+                         'See what fits on this model &rarr;</button>';
       }
+
+      // Abre la guía y lleva la vista a la tabla.
+      document.addEventListener('click', function (ev) {
+        if (!ev.target || ev.target.id !== 'verTabla') return;
+        const guia = document.getElementById('guiaGroq');
+        if (!guia) return;
+        guia.open = true;
+        const tabla = document.getElementById('tablaCarga');
+        (tabla || guia).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
 
       // ── Prompts ───────────────────────────────────────────────────────────
       function buildSystemPrompt() {
