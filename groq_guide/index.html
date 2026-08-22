@@ -1,1 +1,630 @@
+<!DOCTYPE html>
+<!--
+  Setting up your Groq API key - Technical guide for instructors
+  © José M. Fernández, ABE/ASE Math Master Teacher,
+  Harry S. Truman College — City Colleges of Chicago
+  License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+  (CC BY-NC-SA 4.0) — https://creativecommons.org/licenses/by-nc-sa/4.0/
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setting up your Groq API key — Guide for instructors</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23ffffff%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2294%22%20height%3D%2294%22%20fill%3D%22none%22%20stroke%3D%22%23002060%22%20stroke-width%3D%226%22%2F%3E%3Ctext%20x%3D%2250%22%20y%3D%2250%22%20fill%3D%22%23002060%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2278%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22central%22%3E%26%23209%3B%3C%2Ftext%3E%3C%2Fsvg%3E">
+<meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago">
+    <meta name="description" content="Step-by-step guide for instructors: how to obtain a free Groq API key and configure it in the Brightspace quiz generators for Mathematics and Language Arts." />
+    <meta name="author" content="José M. Fernández, ABE/ASE Math Master Teacher, Harry S. Truman College — City Colleges of Chicago" />
+    <meta name="license" content="CC BY-NC-SA 4.0" />
+    <link rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='6' fill='%23ffffff' stroke='%23002060' stroke-width='6'/%3E%3Ctext x='32' y='47' font-family='Georgia,serif' font-size='40' font-weight='bold' text-anchor='middle' fill='%23002060'%3E%C3%91%3C/text%3E%3C/svg%3E" />
+    <style>
+      :root {
+        --tema:     #1e40af;
+        --tema-d:   #002060;
+        --tema-bg:  #eef2f9;
+        --tema-bg2: #dde5f2;
+        --acento:   #5C3900;
+        --acento-bg:#fdf3e3;
+        --txt:      #222222;
+        --txt-2:    #555555;
+        --bg:       #f5f7fa;
+        --borde:    #c7d0e0;
+        --ok:       #044726;
+        --ok-bg:    #e8f4ec;
+      }
 
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 0 1rem 3rem;
+        background: var(--bg);
+        color: var(--txt);
+        font-family: Lato, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .envoltura {
+        max-width: 52rem;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 2rem 2.25rem 2.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .kicker {
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--tema);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin: 0;
+      }
+      .kicker-2 {
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--txt-2);
+        margin: 0.15rem 0 1.4rem;
+      }
+
+      h1 {
+        font-size: 1.85rem;
+        line-height: 1.25;
+        color: var(--tema-d);
+        text-align: center;
+        margin: 0 0 0.4rem;
+      }
+      .subtitulo {
+        text-align: center;
+        color: var(--txt-2);
+        margin: 0 0 1.8rem;
+        font-size: 1.02rem;
+      }
+
+      h2 { font-size: 1.15rem; color: var(--tema-d); margin: 0; }
+      h3 {
+        font-size: 1rem;
+        color: var(--tema);
+        margin: 1.3rem 0 0.3rem;
+      }
+
+      p { margin: 0 0 0.85rem; }
+      a { color: var(--tema); }
+      a:focus-visible,
+      summary:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--acento);
+        outline-offset: 2px;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.92em;
+        background: var(--tema-bg);
+        color: var(--tema-d);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+
+      /* ── Acordeones ─────────────────────────────────────────── */
+      .controles {
+        display: flex;
+        gap: 0.6rem;
+        margin: 0 0 1rem;
+        flex-wrap: wrap;
+      }
+      .btn-control {
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--tema-d);
+        background: var(--tema-bg);
+        border: 1px solid var(--borde);
+        border-radius: 8px;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+      }
+      .btn-control:hover { background: var(--tema-bg2); }
+
+      details.seccion {
+        border: 1px solid var(--borde);
+        border-radius: 10px;
+        margin-bottom: 0.85rem;
+        background: #ffffff;
+        overflow: hidden;
+      }
+      details.seccion > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 0.9rem 1.1rem;
+        background: var(--tema-bg);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      details.seccion > summary::-webkit-details-marker { display: none; }
+      details.seccion > summary::after {
+        content: "\25B6";
+        margin-left: auto;
+        color: var(--tema);
+        font-size: 0.8rem;
+        transition: transform 0.15s ease;
+      }
+      details.seccion[open] > summary::after { transform: rotate(90deg); }
+      details.seccion > summary:hover { background: var(--tema-bg2); }
+
+      .circulo {
+        flex: 0 0 auto;
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 50%;
+        background: var(--tema);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.92rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cuerpo { padding: 0.9rem 1.25rem 1.2rem; }
+
+      /* ── Pasos numerados ────────────────────────────────────── */
+      ol.pasos {
+        list-style: none;
+        counter-reset: paso 0;
+        margin: 0.4rem 0 0;
+        padding: 0;
+      }
+      ol.pasos.continua { counter-reset: paso 4; }
+
+      ol.pasos > li {
+        counter-increment: paso;
+        position: relative;
+        padding: 0 0 1.1rem 3rem;
+        min-height: 2.2rem;
+      }
+      ol.pasos > li::before {
+        content: counter(paso);
+        position: absolute;
+        left: 0;
+        top: 0.15rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 6px;
+        background: var(--tema);
+        color: #ffffff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      ol.pasos .paso-t {
+        display: block;
+        font-weight: 700;
+        color: var(--tema-d);
+        margin-bottom: 0.15rem;
+      }
+      ol.pasos p { margin: 0 0 0.5rem; }
+
+      /* ── Cajas destacadas ───────────────────────────────────── */
+      .caja {
+        border-left: 4px solid var(--tema);
+        background: var(--tema-bg);
+        border-radius: 0 8px 8px 0;
+        padding: 0.9rem 1.1rem;
+        margin: 1.1rem 0;
+      }
+      .caja h3 { margin: 0 0 0.3rem; color: var(--tema-d); font-size: 0.98rem; }
+      .caja p:last-child { margin-bottom: 0; }
+
+      .caja.aviso { border-left-color: var(--acento); background: var(--acento-bg); }
+      .caja.aviso h3 { color: var(--acento); }
+
+      .caja.ok { border-left-color: var(--ok); background: var(--ok-bg); }
+      .caja.ok h3 { color: var(--ok); }
+
+      ul.vinetas { margin: 0.3rem 0 0.9rem; padding-left: 1.3rem; }
+      ul.vinetas li { margin-bottom: 0.4rem; }
+
+      /* ── Preguntas frecuentes ───────────────────────────────── */
+      details.faq {
+        border-bottom: 1px solid var(--borde);
+        padding: 0.15rem 0;
+      }
+      details.faq:last-of-type { border-bottom: none; }
+      details.faq > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 0.65rem 1.6rem 0.65rem 0;
+        font-weight: 600;
+        color: var(--tema-d);
+        position: relative;
+      }
+      details.faq > summary::-webkit-details-marker { display: none; }
+      details.faq > summary::after {
+        content: "\002B";
+        position: absolute;
+        right: 0.2rem;
+        top: 0.55rem;
+        color: var(--tema);
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+      details.faq[open] > summary::after { content: "\2212"; }
+      details.faq > div { padding: 0 0 0.75rem; color: var(--txt-2); }
+      details.faq > div p:last-child { margin-bottom: 0; }
+
+      /* ── Pie ────────────────────────────────────────────────── */
+      footer {
+        margin-top: 2rem;
+        padding-top: 1.2rem;
+        border-top: 1px solid var(--borde);
+        text-align: center;
+        font-size: 0.88rem;
+        color: var(--txt-2);
+      }
+      footer .autor { font-weight: 700; color: var(--tema-d); font-size: 0.98rem; }
+      footer p { margin: 0.2rem 0; }
+
+      .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 34rem) {
+        .envoltura { padding: 1.25rem 1.1rem 1.75rem; }
+        h1 { font-size: 1.45rem; }
+        ol.pasos > li { padding-left: 2.6rem; }
+      }
+
+      @media print {
+        body { background: #ffffff; padding: 0; }
+        .envoltura { border: none; max-width: none; margin: 0; padding: 0; }
+        .controles { display: none; }
+        details.seccion > summary::after,
+        details.faq > summary::after { display: none; }
+        details { break-inside: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="envoltura">
+      <p class="kicker">GEDparaHispanos.com</p>
+      <p class="kicker-2">Truman College &middot; City Colleges of Chicago &nbsp;|&nbsp; Technical guide for instructors</p>
+
+      <h1>Setting up your Groq API key</h1>
+      <p class="subtitulo">A step-by-step guide for using the Brightspace quiz generators for Mathematics and Language Arts</p>
+
+      <p>Dear colleague,</p>
+      <p>
+        The Brightspace quiz generators (Mathematics and Language Arts) run on the Llama 3.3 70B
+        artificial intelligence model through an API provided by a company called Groq. To use these
+        tools, each instructor needs a personal key of their own, called an <strong>API key</strong>.
+        It is completely free. The whole process takes under five minutes and asks for no credit card
+        and no financial information of any kind.
+      </p>
+
+      <div class="controles">
+        <button type="button" class="btn-control" id="abrirTodo">Expand all</button>
+        <button type="button" class="btn-control" id="cerrarTodo">Collapse all</button>
+      </div>
+
+      <!-- 1 ─────────────────────────────────────────────────── -->
+      <details class="seccion" open>
+        <summary>
+          <span class="circulo" aria-hidden="true">1</span>
+          <h2>Why do I need my own key?</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            An API key works like a digital ID card: it authorises the generator to talk to the
+            artificial intelligence servers on your behalf. Using a personal key gives you three things.
+          </p>
+          <ul class="vinetas">
+            <li><strong>Privacy.</strong> Your key is stored only in your own browser (local storage). It is never sent to the author's servers or to the college's.</li>
+            <li><strong>Independence.</strong> You manage your own usage, without depending on a shared quota that someone else might use up.</li>
+            <li><strong>Security.</strong> If you ever want to revoke access, you can do it from your own account without affecting anyone else.</li>
+          </ul>
+
+          <div class="caja ok">
+            <h3>Free of charge</h3>
+            <p>
+              Groq's free tier gives you a generous daily allowance &mdash; far more than ordinary
+              classroom quiz writing requires. Under normal teaching use you should never need to pay
+              for this service.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 2 ─────────────────────────────────────────────────── -->
+      <details class="seccion">
+        <summary>
+          <span class="circulo" aria-hidden="true">2</span>
+          <h2>Getting your free key (steps 1&ndash;4)</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>Follow the four steps below. Each one takes less than a minute.</p>
+
+          <ol class="pasos">
+            <li>
+              <span class="paso-t">Open the Groq portal</span>
+              <p>
+                Open your browser (Chrome, Firefox or Safari) and go to
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.
+                You can also search Google for &ldquo;Groq Console&rdquo; and click the first result.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Create your free account</span>
+              <p>
+                On the main page you will see <strong>Sign up with Google</strong> and
+                <strong>Sign up with GitHub</strong>, along with a form for signing up by email.
+                Signing in with your Google account is the fastest route &mdash; one click and you are
+                registered. You will not be asked for a credit card at any point.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Create a new API key</span>
+              <p>
+                Once you are inside the dashboard, look for the <strong>Create API Key</strong> button.
+                You will be asked for a descriptive name so you can identify the key later; something
+                like &ldquo;GED Generator Truman&rdquo; works well. Then click <strong>Submit</strong>.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Copy the key right away</span>
+              <p>
+                A long key will appear, starting with <code>gsk_</code> followed by many characters.
+                Copy the whole thing with the <strong>Copy</strong> button or by selecting it with your
+                mouse. <strong>This matters:</strong> Groq shows you the key only once. If you close the
+                window without copying it, you will have to generate a new one.
+              </p>
+            </li>
+          </ol>
+
+          <div class="caja aviso">
+            <h3>Treat your key like a password</h3>
+            <p>
+              Handle your key the way you would handle your email password: do not share it with
+              anyone, do not post it on a website, and do not send it through public channels. If you
+              suspect someone else has seen it, you can revoke it at any time from the Groq portal and
+              generate a new one.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 3 ─────────────────────────────────────────────────── -->
+      <details class="seccion">
+        <summary>
+          <span class="circulo" aria-hidden="true">3</span>
+          <h2>Entering the key into the generator (steps 5&ndash;8)</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            Once the key is on your clipboard, open either generator (Mathematics or Language Arts)
+            from GEDparaHispanos.com and follow these steps.
+          </p>
+
+          <ol class="pasos continua">
+            <li>
+              <span class="paso-t">Find the configuration button</span>
+              <p>
+                In the top right corner of the generator you will find a button with a gear icon
+                labelled <strong>Configure API</strong>. If this is the first time you have opened the
+                generator, that panel opens by itself, so you will not have to go looking for it.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Paste your key into the field</span>
+              <p>
+                In the panel that opens, find the heading <strong>Paste your key here</strong> and paste
+                your key with Ctrl+V (Windows) or Cmd+V (Mac). For security the characters appear as
+                dots. If you want to check that you pasted the right thing, use the
+                <strong>Show/Hide</strong> button.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Save the key</span>
+              <p>
+                Click <strong>Save key</strong>. The tool checks that the key has the right shape (it
+                must begin with <code>gsk_</code>) and shows you a confirmation in green:
+                <em>Key saved successfully. You can now generate questions.</em>
+              </p>
+              <p>
+                If instead you see a message in red saying the key must start with <code>gsk_</code>,
+                the key was probably copied incompletely &mdash; go back to the Groq portal and copy it
+                again.
+              </p>
+            </li>
+            <li>
+              <span class="paso-t">Close the panel and start working</span>
+              <p>
+                Close the panel with the &times; in the top right corner or by pressing Esc. You can now
+                use the generator normally. The key stays saved in your browser, so you will not have to
+                paste it again each time.
+              </p>
+            </li>
+          </ol>
+
+          <div class="caja">
+            <h3>One key, both Brightspace generators</h3>
+            <p>
+              The key you save in the Mathematics generator is picked up automatically by the Language
+              Arts generator, as long as you open both in the same browser. There is no need to
+              configure it twice. The MyOpenMath generator is a separate tool and keeps its own copy,
+              so if you use that one as well, paste the same key there once.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 4 ─────────────────────────────────────────────────── -->
+      <details class="seccion">
+        <summary>
+          <span class="circulo" aria-hidden="true">4</span>
+          <h2>Frequently asked questions</h2>
+        </summary>
+        <div class="cuerpo">
+
+          <details class="faq">
+            <summary>Does the key disappear when I close the browser?</summary>
+            <div>
+              <p>
+                No. It stays in the browser permanently until you delete it yourself with the
+                <strong>Delete saved key</strong> button, or until you clear your browsing data from the
+                browser's own settings. It survives shutting the computer down.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Do I have to set up the key on every computer I use?</summary>
+            <div>
+              <p>
+                Yes. Because the key lives in the browser, if you use the generator on the classroom
+                computer and again at home, you will need to enter it in both places. The same key works
+                on all your devices.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>What happens if I go over Groq's free limit?</summary>
+            <div>
+              <p>
+                Groq limits how much you can send in a single minute and in a single day. If you go
+                over, you will see an error saying the quota has been exhausted. Waiting a minute (or a
+                few hours, for the daily limit) is enough for the counter to reset. Nothing is charged
+                automatically and no payment method is on file.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Can my students or other instructors see my key?</summary>
+            <div>
+              <p>
+                No. The key is stored only in your browser and is never passed to other users. If you
+                share the generator's link with your students, they will see the form asking them to
+                configure a key of their own, but they will never have access to yours.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>Can I use the same key for other generators released later?</summary>
+            <div>
+              <p>
+                Yes. Any tool the author builds on GEDparaHispanos.com that uses the Groq API can share
+                the same key stored in your browser.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>If I lose the key, can I recover it?</summary>
+            <div>
+              <p>
+                A lost key cannot be recovered. You can, however, generate a new one at any time from
+                the Groq portal by repeating steps 1 to 4 of this guide.
+              </p>
+            </div>
+          </details>
+
+          <details class="faq">
+            <summary>The generator says access was denied. What now?</summary>
+            <div>
+              <p>
+                That message usually means a network is blocking <code>api.groq.com</code> rather than
+                anything being wrong with your key. Some campus networks and some VPNs do this. Try the
+                same file from a home connection or a phone hotspot with the VPN switched off; if it
+                works there, the block was on the network.
+              </p>
+            </div>
+          </details>
+
+        </div>
+      </details>
+
+      <!-- 5 ─────────────────────────────────────────────────── -->
+      <details class="seccion">
+        <summary>
+          <span class="circulo" aria-hidden="true">5</span>
+          <h2>Technical support</h2>
+        </summary>
+        <div class="cuerpo">
+          <p>
+            If you run into trouble during setup, or the generator does not behave the way this guide
+            describes, please get in touch with the author of the resource for individual help. It is
+            useful to mention which generator you were using, what you had just clicked, and the exact
+            wording of any message that appeared on screen.
+          </p>
+        </div>
+      </details>
+
+      <footer>
+        <p class="autor">Prof. Jos&eacute; M. Fern&aacute;ndez (Zhema)</p>
+        <p>ABE/ASE Math Master Teacher</p>
+        <p>Harry S. Truman College &middot; City Colleges of Chicago</p>
+        <p>GEDparaHispanos.com</p>
+        <p style="margin-top:0.9rem;">
+          This resource is free to use for instructors working with students preparing for the GED
+          examination.
+        </p>
+        <p>
+          Licensed under
+          <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license" target="_blank">CC BY-NC-SA 4.0</a>
+          &middot; English edition &middot; August 2026 &middot; Version 1.0
+        </p>
+      </footer>
+    </main>
+
+    <script>
+      (function () {
+        var secciones = document.querySelectorAll('details.seccion, details.faq');
+
+        function fijar(estado) {
+          secciones.forEach(function (d) { d.open = estado; });
+        }
+
+        document.getElementById('abrirTodo').addEventListener('click', function () { fijar(true); });
+        document.getElementById('cerrarTodo').addEventListener('click', function () { fijar(false); });
+
+        // Direct links such as ...#seccion-3 open that section and scroll to it.
+        function abrirPorHash() {
+          var id = window.location.hash.replace('#', '');
+          if (!id) return;
+          var destino = document.getElementById(id);
+          if (!destino) return;
+          var padre = destino.closest('details');
+          while (padre) { padre.open = true; padre = padre.parentElement.closest('details'); }
+          destino.scrollIntoView();
+        }
+        window.addEventListener('hashchange', abrirPorHash);
+        abrirPorHash();
+
+        // Printing must not hide collapsed content: open everything first, then restore.
+        var previo = [];
+        window.addEventListener('beforeprint', function () {
+          previo = [];
+          secciones.forEach(function (d, i) { previo[i] = d.open; d.open = true; });
+        });
+        window.addEventListener('afterprint', function () {
+          secciones.forEach(function (d, i) { d.open = previo[i]; });
+        });
+      })();
+    </script>
+  </body>
+</html>
